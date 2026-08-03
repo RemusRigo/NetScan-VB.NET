@@ -33,7 +33,17 @@ Just run NetScan.exe
 
 ## Roadmap
 
+* 2026-08-03: Add: Vendor (onffline)
+* 2026-08-03: Add: Vendor (online version fails, Too Many Requests error)
+* 2026-08-03: Add: Hostname
+* 2026-08-03: Add: MAC Address
 * 2026-08-02: Add: hide Offline IP's
 * 2026-08-02: Add: show IP status
 * 2026-08-02: Add: scan IP range
 * 2026-08-02: Project started
+
+
+
+## Resources
+
+![MAC Address Vendors OUI](https://standards-oui.ieee.org/oui/oui.csv)

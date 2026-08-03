@@ -23,27 +23,29 @@ Partial Class frmNetScan
    <System.Diagnostics.DebuggerStepThrough()>
    Private Sub InitializeComponent()
       Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmNetScan))
-      ToolStrip1 = New ToolStrip()
+      tsBtn = New ToolStrip()
       txBtnScan = New ToolStripButton()
+      tsBtnSep1 = New ToolStripSeparator()
       tsBtnHideOffline = New ToolStripButton()
+      tsBtnSep2 = New ToolStripSeparator()
       scNetScan = New SplitContainer()
       txtBoxIPRange = New TextBox()
       lvDevices = New ListView()
-      ToolStrip1.SuspendLayout()
+      tsBtn.SuspendLayout()
       CType(scNetScan, ComponentModel.ISupportInitialize).BeginInit()
       scNetScan.Panel1.SuspendLayout()
       scNetScan.Panel2.SuspendLayout()
       scNetScan.SuspendLayout()
       SuspendLayout()
       ' 
-      ' ToolStrip1
+      ' tsBtn
       ' 
-      ToolStrip1.Items.AddRange(New ToolStripItem() {txBtnScan, tsBtnHideOffline})
-      ToolStrip1.Location = New Point(0, 0)
-      ToolStrip1.Name = "ToolStrip1"
-      ToolStrip1.Size = New Size(800, 25)
-      ToolStrip1.TabIndex = 0
-      ToolStrip1.Text = "ToolStrip1"
+      tsBtn.Items.AddRange(New ToolStripItem() {txBtnScan, tsBtnSep1, tsBtnHideOffline, tsBtnSep2})
+      tsBtn.Location = New Point(0, 0)
+      tsBtn.Name = "tsBtn"
+      tsBtn.Size = New Size(884, 25)
+      tsBtn.TabIndex = 0
+      tsBtn.Text = "ToolStrip1"
       ' 
       ' txBtnScan
       ' 
@@ -53,6 +55,11 @@ Partial Class frmNetScan
       txBtnScan.Name = "txBtnScan"
       txBtnScan.Size = New Size(23, 22)
       txBtnScan.Text = "ToolStripButton1"
+      ' 
+      ' tsBtnSep1
+      ' 
+      tsBtnSep1.Name = "tsBtnSep1"
+      tsBtnSep1.Size = New Size(6, 25)
       ' 
       ' tsBtnHideOffline
       ' 
@@ -64,6 +71,11 @@ Partial Class frmNetScan
       tsBtnHideOffline.Size = New Size(23, 22)
       tsBtnHideOffline.Text = "ToolStripButton1"
       tsBtnHideOffline.ToolTipText = "Hide offline IP's"
+      ' 
+      ' tsBtnSep2
+      ' 
+      tsBtnSep2.Name = "tsBtnSep2"
+      tsBtnSep2.Size = New Size(6, 25)
       ' 
       ' scNetScan
       ' 
@@ -78,17 +90,17 @@ Partial Class frmNetScan
       ' scNetScan.Panel2
       ' 
       scNetScan.Panel2.Controls.Add(lvDevices)
-      scNetScan.Size = New Size(800, 391)
-      scNetScan.SplitterDistance = 266
+      scNetScan.Size = New Size(884, 402)
+      scNetScan.SplitterDistance = 165
       scNetScan.TabIndex = 2
       ' 
       ' txtBoxIPRange
       ' 
-      txtBoxIPRange.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
-      txtBoxIPRange.Location = New Point(3, 3)
+      txtBoxIPRange.Dock = DockStyle.Fill
+      txtBoxIPRange.Location = New Point(0, 0)
       txtBoxIPRange.Multiline = True
       txtBoxIPRange.Name = "txtBoxIPRange"
-      txtBoxIPRange.Size = New Size(260, 385)
+      txtBoxIPRange.Size = New Size(165, 402)
       txtBoxIPRange.TabIndex = 2
       ' 
       ' lvDevices
@@ -96,7 +108,7 @@ Partial Class frmNetScan
       lvDevices.Dock = DockStyle.Fill
       lvDevices.Location = New Point(0, 0)
       lvDevices.Name = "lvDevices"
-      lvDevices.Size = New Size(530, 391)
+      lvDevices.Size = New Size(715, 402)
       lvDevices.TabIndex = 0
       lvDevices.UseCompatibleStateImageBehavior = False
       ' 
@@ -104,13 +116,13 @@ Partial Class frmNetScan
       ' 
       AutoScaleDimensions = New SizeF(7F, 15F)
       AutoScaleMode = AutoScaleMode.Font
-      ClientSize = New Size(800, 450)
+      ClientSize = New Size(884, 461)
       Controls.Add(scNetScan)
-      Controls.Add(ToolStrip1)
+      Controls.Add(tsBtn)
       Name = "frmNetScan"
       Text = "NetScan"
-      ToolStrip1.ResumeLayout(False)
-      ToolStrip1.PerformLayout()
+      tsBtn.ResumeLayout(False)
+      tsBtn.PerformLayout()
       scNetScan.Panel1.ResumeLayout(False)
       scNetScan.Panel1.PerformLayout()
       scNetScan.Panel2.ResumeLayout(False)
@@ -120,11 +132,13 @@ Partial Class frmNetScan
       PerformLayout()
    End Sub
 
-   Friend WithEvents ToolStrip1 As ToolStrip
+   Friend WithEvents tsBtn As ToolStrip
    Friend WithEvents scNetScan As SplitContainer
    Friend WithEvents txtBoxIPRange As TextBox
    Friend WithEvents lvDevices As ListView
    Friend WithEvents txBtnScan As ToolStripButton
    Friend WithEvents tsBtnHideOffline As ToolStripButton
+   Friend WithEvents tsBtnSep1 As ToolStripSeparator
+   Friend WithEvents tsBtnSep2 As ToolStripSeparator
 
 End Class

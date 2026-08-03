@@ -15,8 +15,7 @@ Public Class frmNetScan
    Private isScanning As Boolean = False
    Private appExit As Boolean = False
 
-   Private ReadOnly INVALID_HANDLE_VALUE As IntPtr = New IntPtr(-1)
-   Public Const INADDR_NONE As UInteger = &HFFFFFFFFUI
+   Private ReadOnly vendorThrottle As New SemaphoreSlim(2) ' max 2 concurrent vendor lookups
 
    Private Structure ParsedRange
       Public BaseIP As String
@@ -25,55 +24,8 @@ Public Class frmNetScan
       Public Total As Integer
    End Structure
 
-   ''' <summary>Equivalent of GetIPFromHost — local machine's primary IPv4 address.</summary>
-   Public Function GetLocalIP() As String
-      Try
-         Dim hostName = Dns.GetHostName()
-         Dim entry = Dns.GetHostEntry(hostName)
-         Dim ipv4 = entry.AddressList.FirstOrDefault(Function(a) a.AddressFamily = AddressFamily.InterNetwork)
-         Return If(ipv4?.ToString(), "Unknown")
-      Catch
-         Return "Unknown (Winsock is not responding)"
-      End Try
-   End Function
-
-   Public Function IPToDWORD(ip As String) As UInteger
-      Dim addr As IPAddress = Nothing
-      If Not IPAddress.TryParse(ip, addr) OrElse addr.AddressFamily <> AddressFamily.InterNetwork Then
-         Return INADDR_NONE
-      End If
-      Return BitConverter.ToUInt32(addr.GetAddressBytes(), 0)
-   End Function
-
-   ''' <summary>Equivalent of IPToRange — "192.168.1.50" -> "192.168.1.1-255".</summary>
-   Public Function IPToRange(ip As String) As String
-      Dim lastDot = ip.LastIndexOf("."c)
-      If lastDot < 0 Then Return ip
-      Return ip.Substring(0, lastDot + 1) & "1-255"
-   End Function
-
-   Public Function PingIP(targetAddr As UInteger) As Boolean
-      Dim icmpHandle As IntPtr = IcmpCreateFile()
-      If icmpHandle = INVALID_HANDLE_VALUE Then Return False
-
-      Try
-         Dim replySize As Integer = Marshal.SizeOf(Of ICMP_ECHO_REPLY)() + 8
-         Dim replyBuffer As IntPtr = Marshal.AllocHGlobal(replySize)
-         Try
-            Dim ret = IcmpSendEcho(icmpHandle, targetAddr, IntPtr.Zero, 0,
-                                        IntPtr.Zero, replyBuffer, CUInt(replySize), 500)
-            If ret = 0 Then Return False
-
-            Dim reply = Marshal.PtrToStructure(Of ICMP_ECHO_REPLY)(replyBuffer)
-            Return reply.Status = 0 ' IP_SUCCESS
-         Finally
-            Marshal.FreeHGlobal(replyBuffer)
-         End Try
-      Finally
-         IcmpCloseHandle(icmpHandle)
-      End Try
-   End Function
-
+   '-----------------------------------------------------------------------------------------------
+   ' Parse Range
    Private Function ParseRangeStr(rangeStr As String, ByRef result As ParsedRange) As Boolean
       Dim dashIdx = rangeStr.IndexOf("-"c)
       If dashIdx = -1 Then Return False
@@ -93,6 +45,26 @@ Public Class frmNetScan
       If result.MinIP > result.MaxIP Then Return False
       result.Total = (result.MaxIP - result.MinIP) + 1
       Return True
+   End Function
+
+   '-----------------------------------------------------------------------------------------------
+   ' Parse Multiple Ranges
+   Private Function ParseMultipleRanges(input As String, ByRef results As List(Of ParsedRange)) As Boolean
+      results = New List(Of ParsedRange)()
+
+      'For Each part In input.Split(","c)
+      For Each part In input.Split({vbCrLf, vbLf, vbCr}, StringSplitOptions.RemoveEmptyEntries)
+         Dim trimmed = part.Trim()
+         If trimmed = "" Then Continue For
+
+         Dim parsed As New ParsedRange()
+         If Not ParseRangeStr(trimmed, parsed) Then
+            Return False ' one bad range fails the whole batch
+         End If
+         results.Add(parsed)
+      Next
+
+      Return results.Count > 0
    End Function
 
    '-----------------------------------------------------------------------------------------------
@@ -139,12 +111,22 @@ Public Class frmNetScan
                                                                     Dim processItem = itemsToProcess(index)
                                                                     Dim targetAddr = CUInt(processItem.Tag)
                                                                     If targetAddr = INADDR_NONE Then Exit Sub
+                                                                    Dim hostName As String = ""
+                                                                    Dim macAddress As String = ""
 
                                                                     Dim isOnline = PingIP(targetAddr)
+                                                                    If isOnline Then
+                                                                       hostName = GetHostNameFromIP(targetAddr)
+                                                                       macAddress = GetMACFromIP(targetAddr)
+                                                                    End If
+
                                                                     If Not appExit Then
                                                                        Invoke(Sub()
-                                                                                 processItem.Text = If(isOnline, "Online", "Offline")
-                                                                                 If Not isOnline Then
+                                                                                 If isOnline Then
+                                                                                    processItem.Text = If(isOnline, "Online", "Offline")
+                                                                                    processItem.SubItems(2).Text = hostName
+                                                                                    processItem.SubItems(3).Text = macAddress
+                                                                                 Else
                                                                                     lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
                                                                                  End If
                                                                               End Sub)
@@ -164,6 +146,90 @@ Public Class frmNetScan
                         End Sub)
    End Sub
 
+   Private Sub ScanRanges(ranges As List(Of ParsedRange))
+      isScanning = True
+      appExit = False
+
+      lvDevices.Items.Clear()
+
+      For Each r In ranges
+         For index As Integer = r.MinIP To r.MaxIP
+            Dim currentIP = r.BaseIP & "." & index.ToString()
+            Dim item = lvDevices.Items.Add("Pending")
+            item.SubItems.Add(currentIP)
+            item.SubItems.Add("") ' Host Name
+            item.SubItems.Add("") ' MAC Address
+            item.SubItems.Add("") ' Vendor
+            item.Checked = True
+            item.Tag = IPToDWORD(currentIP)
+         Next
+      Next
+
+      Dim itemsToProcess As New List(Of ListViewItem)()
+      For Each item As ListViewItem In lvDevices.Items
+         If item.Checked Then
+            itemsToProcess.Add(item)
+         End If
+      Next
+
+      pbLoad.Maximum = itemsToProcess.Count
+      pbLoad.Value = 0
+      Dim completedCount = 0
+
+      bkTask = Task.Run(Sub()
+                           Parallel.For(0, itemsToProcess.Count, Sub(index As Integer)
+                                                                    If appExit Then Exit Sub
+
+                                                                    Dim processItem = itemsToProcess(index)
+                                                                    Dim targetAddr = CUInt(processItem.Tag)
+                                                                    If targetAddr = INADDR_NONE Then Exit Sub
+                                                                    Dim hostName As String = ""
+                                                                    Dim macAddress As String = ""
+                                                                    Dim vendor As String = "Unknown"
+
+
+                                                                    Dim isOnline = PingIP(targetAddr)
+                                                                    If isOnline Then
+                                                                       hostName = GetHostNameFromIP(targetAddr)
+                                                                       macAddress = GetMACFromIP(targetAddr)
+                                                                       ' already running inside Task.Run on a background thread
+                                                                       ' block the async call instead of awaiting it
+                                                                       ' this: vendor = If(macAddress <> "Unknown", Await GetVendorFromMAC(macAddress), "Unknown")
+                                                                       ' would return before the await completes, since Async Sub is fire-and-forget
+                                                                       ' with no way for Parallel.For to wait for it
+
+                                                                       'vendor = If(macAddress <> "Unknown", GetVendorOnlineFromMAC(macAddress).GetAwaiter().GetResult(), "Unknown")
+
+                                                                       If macAddress <> "Unknown" Then
+                                                                          vendor = GetVendorFromMAC(macAddress)
+                                                                       End If
+                                                                    End If
+
+                                                                    If Not appExit Then
+                                                                       Invoke(Sub()
+                                                                                 If isOnline Then
+                                                                                    processItem.Text = If(isOnline, "Online", "Offline")
+                                                                                    processItem.SubItems(2).Text = hostName
+                                                                                    processItem.SubItems(3).Text = macAddress
+                                                                                    processItem.SubItems(4).Text = vendor
+                                                                                 Else
+                                                                                    lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
+                                                                                 End If
+                                                                              End Sub)
+                                                                    End If
+
+                                                                    Dim currentProgress = Interlocked.Increment(completedCount)
+                                                                    If Not appExit Then
+                                                                       Invoke(Sub() pbLoad.Value = Math.Min(currentProgress, pbLoad.Maximum))
+                                                                    End If
+                                                                 End Sub)
+
+                           Invoke(Sub()
+                                     isScanning = False
+                                     If Not appExit Then pbLoad.Value = pbLoad.Maximum
+                                  End Sub)
+                        End Sub)
+   End Sub
 
    Private Sub frmNetScan_Load(sender As Object, e As EventArgs) Handles MyBase.Load
       lvDevices.View = View.Details
@@ -171,7 +237,9 @@ Public Class frmNetScan
       lvDevices.FullRowSelect = True
       lvDevices.Columns.Add("Status", 100, HorizontalAlignment.Left)
       lvDevices.Columns.Add("IP Address", 120, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("Hostname", 120, HorizontalAlignment.Left)
       lvDevices.Columns.Add("MAC Address", 120, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("Vendor", 225, HorizontalAlignment.Left)
 
       pbLoad = New rrProgressBar()
       pbLoad.Dock = DockStyle.None
@@ -180,17 +248,25 @@ Public Class frmNetScan
       pbLoad.Size = New Size(Me.ClientSize.Width - 10, 20)
       Me.Controls.Add(pbLoad)
 
-
       txtBoxIPRange.Text = IPToRange(GetLocalIP())
+
+      LoadOuiTable()
    End Sub
 
    Private Sub txBtnScan_Click(sender As Object, e As EventArgs) Handles txBtnScan.Click
-      Dim parsedRange As New ParsedRange()
-      If Not ParseRangeStr(txtBoxIPRange.Text, parsedRange) Then
+      'Dim parsedRange As New ParsedRange()
+      'If Not ParseRangeStr(txtBoxIPRange.Text, parsedRange) Then
+      '   MessageBox.Show("Invalid range")
+      '   Exit Sub
+      'End If
+      'ScanRange(parsedRange.BaseIP, parsedRange.MinIP, parsedRange.MaxIP)
+
+      Dim ranges As New List(Of ParsedRange)()
+      If Not ParseMultipleRanges(txtBoxIPRange.Text, ranges) Then
          MessageBox.Show("Invalid range")
          Exit Sub
       End If
-      ScanRange(parsedRange.BaseIP, parsedRange.MinIP, parsedRange.MaxIP)
+      ScanRanges(ranges)
    End Sub
 
    Private Sub frmNetScan_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
