@@ -19,7 +19,11 @@ Just run NetScan.exe
 
 ## Features
 
-* 
+* Scan multiple ranges
+* Display online IP's
+* Display MAC Address
+* Display Hostname
+* Display Vendor
 
 
 
@@ -33,7 +37,7 @@ Just run NetScan.exe
 
 ## Roadmap
 
-* 2026-08-03: Add: Vendor (onffline)
+* 2026-08-03: Add: Vendor (offline)
 * 2026-08-03: Add: Vendor (online version fails, Too Many Requests error)
 * 2026-08-03: Add: Hostname
 * 2026-08-03: Add: MAC Address
@@ -46,4 +50,5 @@ Just run NetScan.exe
 
 ## Resources
 
-[MAC Address Vendors OUI](https://standards-oui.ieee.org/oui/oui.csv)
+[OUI Standards](https://standards-oui.ieee.org/oui/oui.csv)
+[MAC Address Vendors](https://macvendors.com)
