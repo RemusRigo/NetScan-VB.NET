@@ -46,4 +46,4 @@ Just run NetScan.exe
 
 ## Resources
 
-![MAC Address Vendors OUI](https://standards-oui.ieee.org/oui/oui.csv)
+[MAC Address Vendors OUI](https://standards-oui.ieee.org/oui/oui.csv)
