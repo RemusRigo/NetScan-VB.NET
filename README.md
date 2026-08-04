@@ -21,9 +21,9 @@ Just run NetScan.exe
 
 * Scan multiple ranges
 * Display online IP's
-* Display MAC Address
-* Display Hostname
-* Display Vendor
+* Display/hide MAC Address
+* Display/hide Hostname
+* Display/hide Vendor (offline version)
 
 
 
@@ -37,6 +37,7 @@ Just run NetScan.exe
 
 ## Roadmap
 
+* 2026-08-04: Add: About form
 * 2026-08-04: Add: [Radar Icon](https://www.flaticon.com/free-icon/radar_6989456) by [bzzrincantation](https://www.flaticon.com/authors/bzzrincantation)
 * 2026-08-04: Add: Button icons
 * 2026-08-03: Add: Vendor (offline)
