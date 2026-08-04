@@ -1,4 +1,10 @@
-﻿Imports System.Runtime.InteropServices
+﻿'--------------------------------------------------------------------------------------------------
+' IPHlpAPI.vb: IPHlpAPI.dll declarations
+'    © 2026 Remus Rigo
+'       v1.0.20260804
+'--------------------------------------------------------------------------------------------------
+
+Imports System.Runtime.InteropServices
 
 Module IPHlpAPI
 
@@ -21,6 +27,9 @@ Module IPHlpAPI
       Public DataPtr As IntPtr
       Public Options As IP_OPTION_INFORMATION
    End Structure
+
+   '-----------------------------------------------------------------------------------------------
+   ' DLL Imports
 
    <DllImport("iphlpapi.dll", SetLastError:=True)>
    Public Function IcmpCreateFile() As IntPtr

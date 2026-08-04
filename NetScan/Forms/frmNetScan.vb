@@ -1,15 +1,29 @@
-﻿Imports System.Net
+﻿'--------------------------------------------------------------------------------------------------
+' NetScan: frmNetScan.vb: Main form
+'    © 2026 Remus Rigo
+'       v1.0.20260804
+'--------------------------------------------------------------------------------------------------
+
+Imports System.Net
 Imports System.Net.Sockets
 Imports System.Runtime.InteropServices
 Imports System.Threading
 
+Imports NetScan.API
+
 Public Class frmNetScan
+
+   Private Const SYSMENU_ABOUT_ID As UInteger = 1000
 
    Private pbLoad As rrProgressBar
 
    Private itemsMin As Integer
    Private itemsMax As Integer
+
    Private hideOffline As Boolean = False
+   Private hideMAC As Boolean = False
+   Private hideHostname As Boolean = False
+   Private hideVendor As Boolean = False
 
    Private bkTask As Task
    Private isScanning As Boolean = False
@@ -24,8 +38,32 @@ Public Class frmNetScan
       Public Total As Integer
    End Structure
 
+   Protected Overrides Sub OnHandleCreated(e As EventArgs)
+      MyBase.OnHandleCreated(e)
+      Dim hSysMenu As IntPtr = GetSystemMenu(Me.Handle, False)
+      ' Add a separator and then your custom item
+      AppendMenu(hSysMenu, MF_SEPARATOR, 0, String.Empty)
+      AppendMenu(hSysMenu, MF_STRING, SYSMENU_ABOUT_ID, "About...")
+   End Sub
+
+   Protected Overrides Sub WndProc(ByRef m As Message)
+      MyBase.WndProc(m)
+      If m.Msg = WM_SYSCOMMAND Then
+         If CUInt(m.WParam) = SYSMENU_ABOUT_ID Then
+            frmAbout.ShowDialog()
+         End If
+      End If
+   End Sub
+
    '-----------------------------------------------------------------------------------------------
-   ' Parse Range
+   ' ParseRange
+   ''' <summary>Parses a range string in the format "192.168.1.10-20"
+   ''' this will return:
+   ''' BaseIP = "192.168.1."
+   ''' MinIP = 10
+   ''' MaxIP = 20
+   ''' Total = 11
+   ''' </summary>
    Private Function ParseRangeStr(rangeStr As String, ByRef result As ParsedRange) As Boolean
       Dim dashIdx = rangeStr.IndexOf("-"c)
       If dashIdx = -1 Then Return False
@@ -48,7 +86,7 @@ Public Class frmNetScan
    End Function
 
    '-----------------------------------------------------------------------------------------------
-   ' Parse Multiple Ranges
+   ' ParseMultipleRanges
    Private Function ParseMultipleRanges(input As String, ByRef results As List(Of ParsedRange)) As Boolean
       results = New List(Of ParsedRange)()
 
@@ -68,84 +106,7 @@ Public Class frmNetScan
    End Function
 
    '-----------------------------------------------------------------------------------------------
-   ' Scan Range
-   Private Sub ScanRange(baseIP As String, minIP As Integer, maxIP As Integer)
-      itemsMin = minIP
-      itemsMax = maxIP
-
-      Dim localBaseIP = baseIP & "."
-      Dim totalIPs = (maxIP - minIP) + 1
-
-      isScanning = True
-      appExit = False
-
-      lvDevices.Items.Clear()
-
-      ' Add IP addresses from the range ----------------------------------
-      For index As Integer = minIP To maxIP
-         Dim currentIP = localBaseIP & index.ToString()
-         Dim item = lvDevices.Items.Add("Pending") 'Status
-         item.SubItems.Add(currentIP) 'IP Address
-         item.SubItems.Add("") 'Host Name
-         item.SubItems.Add("") 'MAC Address
-         item.Checked = True
-         item.Tag = IPToDWORD(currentIP) ' stash the target address for the scan step
-      Next
-
-      ' Items to process -------------------------------------------------
-      Dim itemsToProcess As New List(Of ListViewItem)()
-      For Each item As ListViewItem In lvDevices.Items
-         If item.Checked Then
-            itemsToProcess.Add(item)
-         End If
-      Next
-
-      pbLoad.Maximum = itemsToProcess.Count
-      pbLoad.Value = 0
-      Dim completedCount = 0
-
-      bkTask = Task.Run(Sub()
-                           Parallel.For(0, itemsToProcess.Count, Sub(index As Integer)
-                                                                    If appExit Then Exit Sub
-
-                                                                    Dim processItem = itemsToProcess(index)
-                                                                    Dim targetAddr = CUInt(processItem.Tag)
-                                                                    If targetAddr = INADDR_NONE Then Exit Sub
-                                                                    Dim hostName As String = ""
-                                                                    Dim macAddress As String = ""
-
-                                                                    Dim isOnline = PingIP(targetAddr)
-                                                                    If isOnline Then
-                                                                       hostName = GetHostNameFromIP(targetAddr)
-                                                                       macAddress = GetMACFromIP(targetAddr)
-                                                                    End If
-
-                                                                    If Not appExit Then
-                                                                       Invoke(Sub()
-                                                                                 If isOnline Then
-                                                                                    processItem.Text = If(isOnline, "Online", "Offline")
-                                                                                    processItem.SubItems(2).Text = hostName
-                                                                                    processItem.SubItems(3).Text = macAddress
-                                                                                 Else
-                                                                                    lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
-                                                                                 End If
-                                                                              End Sub)
-                                                                    End If
-
-                                                                    Dim currentProgress = Interlocked.Increment(completedCount)
-                                                                    If Not appExit Then
-                                                                       Invoke(Sub() pbLoad.Value = Math.Min(currentProgress, pbLoad.Maximum))
-                                                                    End If
-                                                                 End Sub)
-                           Invoke(Sub()
-                                     isScanning = False
-                                     If Not appExit Then
-                                        pbLoad.Value = pbLoad.Maximum
-                                     End If
-                                  End Sub)
-                        End Sub)
-   End Sub
-
+   ' ScanRanges
    Private Sub ScanRanges(ranges As List(Of ParsedRange))
       isScanning = True
       appExit = False
@@ -190,18 +151,12 @@ Public Class frmNetScan
 
                                                                     Dim isOnline = PingIP(targetAddr)
                                                                     If isOnline Then
-                                                                       hostName = GetHostNameFromIP(targetAddr)
-                                                                       macAddress = GetMACFromIP(targetAddr)
-                                                                       ' already running inside Task.Run on a background thread
-                                                                       ' block the async call instead of awaiting it
-                                                                       ' this: vendor = If(macAddress <> "Unknown", Await GetVendorFromMAC(macAddress), "Unknown")
-                                                                       ' would return before the await completes, since Async Sub is fire-and-forget
-                                                                       ' with no way for Parallel.For to wait for it
-
-                                                                       'vendor = If(macAddress <> "Unknown", GetVendorOnlineFromMAC(macAddress).GetAwaiter().GetResult(), "Unknown")
-
-                                                                       If macAddress <> "Unknown" Then
-                                                                          vendor = GetVendorFromMAC(macAddress)
+                                                                       If Not hideHostname Then hostName = GetHostNameFromIP(targetAddr)
+                                                                       If Not hideMAC Then macAddress = GetMACFromIP(targetAddr)
+                                                                       If Not hideVendor Then
+                                                                          If macAddress <> "Unknown" Then
+                                                                             vendor = GetVendorFromMAC(macAddress)
+                                                                          End If
                                                                        End If
                                                                     End If
 
@@ -209,11 +164,11 @@ Public Class frmNetScan
                                                                        Invoke(Sub()
                                                                                  If isOnline Then
                                                                                     processItem.Text = If(isOnline, "Online", "Offline")
-                                                                                    processItem.SubItems(2).Text = hostName
-                                                                                    processItem.SubItems(3).Text = macAddress
-                                                                                    processItem.SubItems(4).Text = vendor
+                                                                                    If Not hideHostname Then processItem.SubItems(2).Text = hostName
+                                                                                    If Not hideMAC Then processItem.SubItems(3).Text = macAddress
+                                                                                    If Not hideVendor Then processItem.SubItems(4).Text = vendor
                                                                                  Else
-                                                                                    lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
+                                                                                    If hideOffline Then lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
                                                                                  End If
                                                                               End Sub)
                                                                     End If
@@ -223,15 +178,20 @@ Public Class frmNetScan
                                                                        Invoke(Sub() pbLoad.Value = Math.Min(currentProgress, pbLoad.Maximum))
                                                                     End If
                                                                  End Sub)
-
+                           ' end of Parallel.For
                            Invoke(Sub()
                                      isScanning = False
+                                     tsBtn.Enabled = True
                                      If Not appExit Then pbLoad.Value = pbLoad.Maximum
                                   End Sub)
                         End Sub)
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' frmNetScan: OnLoad
    Private Sub frmNetScan_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+      Me.Text = appTitle
+
       lvDevices.View = View.Details
       lvDevices.CheckBoxes = True
       lvDevices.FullRowSelect = True
@@ -253,22 +213,8 @@ Public Class frmNetScan
       LoadOuiTable()
    End Sub
 
-   Private Sub txBtnScan_Click(sender As Object, e As EventArgs) Handles txBtnScan.Click
-      'Dim parsedRange As New ParsedRange()
-      'If Not ParseRangeStr(txtBoxIPRange.Text, parsedRange) Then
-      '   MessageBox.Show("Invalid range")
-      '   Exit Sub
-      'End If
-      'ScanRange(parsedRange.BaseIP, parsedRange.MinIP, parsedRange.MaxIP)
-
-      Dim ranges As New List(Of ParsedRange)()
-      If Not ParseMultipleRanges(txtBoxIPRange.Text, ranges) Then
-         MessageBox.Show("Invalid range")
-         Exit Sub
-      End If
-      ScanRanges(ranges)
-   End Sub
-
+   '-----------------------------------------------------------------------------------------------
+   ' frmNetScan: OnFormClosing
    Private Sub frmNetScan_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
       If Not isScanning Then Return
 
@@ -287,7 +233,49 @@ Public Class frmNetScan
       Close() ' now safe — isScanning is False
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' txBtnScan: OnClick
+   Private Sub txBtnScan_Click(sender As Object, e As EventArgs) Handles txBtnScan.Click
+      tsBtn.Enabled = False
+      Dim ranges As New List(Of ParsedRange)()
+      If Not ParseMultipleRanges(txtBoxIPRange.Text, ranges) Then
+         MessageBox.Show("Invalid range")
+         Exit Sub
+      End If
+      ScanRanges(ranges)
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnHideOffline: OnClick
    Private Sub tsBtnHideOffline_Click(sender As Object, e As EventArgs) Handles tsBtnHideOffline.Click
       hideOffline = tsBtnHideOffline.Checked
    End Sub
+
+   Private Sub tsBtnHideHostname_Click(sender As Object, e As EventArgs) Handles tsBtnHideHostname.Click
+      hideHostname = tsBtnHideHostname.Checked
+      If hideHostname Then
+         lvDevices.Columns(2).Width = 0
+      Else
+         lvDevices.Columns(2).Width = 120
+      End If
+   End Sub
+
+   Private Sub tsBtnHideMAC_Click(sender As Object, e As EventArgs) Handles tsBtnHideMAC.Click
+      hideMAC = tsBtnHideMAC.Checked
+      If hideMAC Then
+         lvDevices.Columns(3).Width = 0
+      Else
+         lvDevices.Columns(3).Width = 120
+      End If
+   End Sub
+
+   Private Sub tsBtnHideVendor_Click(sender As Object, e As EventArgs) Handles tsBtnHideVendor.Click
+      hideVendor = tsBtnHideVendor.Checked
+      If hideVendor Then
+         lvDevices.Columns(4).Width = 0
+      Else
+         lvDevices.Columns(4).Width = 225
+      End If
+   End Sub
+
 End Class

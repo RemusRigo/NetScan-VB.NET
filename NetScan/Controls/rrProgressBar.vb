@@ -1,4 +1,10 @@
-﻿Imports System.ComponentModel
+﻿'--------------------------------------------------------------------------------------------------
+' rrProgressBar.vb: Custom progress bar control
+'    © 2026 Remus Rigo
+'       v1.0.20260621
+'--------------------------------------------------------------------------------------------------
+
+Imports System.ComponentModel
 Imports System.Drawing
 Imports System.Windows.Forms
 

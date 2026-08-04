@@ -7,6 +7,9 @@
     <Compile Update="Controls\rrProgressBar.vb">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Update="Forms\frmAbout.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Forms\frmNetScan.vb">
       <SubType>Form</SubType>
     </Compile>
