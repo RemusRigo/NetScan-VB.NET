@@ -48,7 +48,7 @@ Partial Class frmNetScan
       tsBtn.Items.AddRange(New ToolStripItem() {txBtnScan, tsBtnSep1, tsBtnHideOffline, tsBtnHideHostname, tsBtnHideMAC, tsBtnHideVendor, tsBtnSep2})
       tsBtn.Location = New Point(0, 0)
       tsBtn.Name = "tsBtn"
-      tsBtn.Size = New Size(884, 25)
+      tsBtn.Size = New Size(1008, 25)
       tsBtn.TabIndex = 0
       ' 
       ' txBtnScan
@@ -126,18 +126,19 @@ Partial Class frmNetScan
       ' scNetScan.Panel2
       ' 
       scNetScan.Panel2.Controls.Add(lvDevices)
-      scNetScan.Size = New Size(884, 408)
-      scNetScan.SplitterDistance = 165
+      scNetScan.Size = New Size(1008, 508)
+      scNetScan.SplitterDistance = 130
       scNetScan.TabIndex = 2
       ' 
       ' txtBoxIPRange
       ' 
+      txtBoxIPRange.AcceptsReturn = True
       txtBoxIPRange.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
       txtBoxIPRange.BackColor = Color.AliceBlue
       txtBoxIPRange.Location = New Point(3, 0)
       txtBoxIPRange.Multiline = True
       txtBoxIPRange.Name = "txtBoxIPRange"
-      txtBoxIPRange.Size = New Size(160, 408)
+      txtBoxIPRange.Size = New Size(125, 508)
       txtBoxIPRange.TabIndex = 2
       ' 
       ' lvDevices
@@ -146,7 +147,7 @@ Partial Class frmNetScan
       lvDevices.BackColor = Color.AliceBlue
       lvDevices.Location = New Point(0, 0)
       lvDevices.Name = "lvDevices"
-      lvDevices.Size = New Size(713, 408)
+      lvDevices.Size = New Size(872, 508)
       lvDevices.TabIndex = 0
       lvDevices.UseCompatibleStateImageBehavior = False
       ' 
@@ -166,7 +167,7 @@ Partial Class frmNetScan
       AutoScaleDimensions = New SizeF(7F, 15F)
       AutoScaleMode = AutoScaleMode.Font
       BackColor = Color.Azure
-      ClientSize = New Size(884, 461)
+      ClientSize = New Size(1008, 561)
       Controls.Add(scNetScan)
       Controls.Add(tsBtn)
       Icon = CType(resources.GetObject("$this.Icon"), Icon)

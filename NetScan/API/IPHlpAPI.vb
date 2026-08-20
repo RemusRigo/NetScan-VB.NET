@@ -1,5 +1,5 @@
 ﻿'--------------------------------------------------------------------------------------------------
-' IPHlpAPI.vb: IPHlpAPI.dll declarations
+' IPHlpAPI.vb: IPHlpAPI.dll / ICMP.dll (Internet Control Message Protocol) declarations
 '    © 2026 Remus Rigo
 '       v1.0.20260804
 '--------------------------------------------------------------------------------------------------
@@ -26,6 +26,7 @@ Module IPHlpAPI
       Public Reserved As UShort
       Public DataPtr As IntPtr
       Public Options As IP_OPTION_INFORMATION
+      Public Data As IntPtr
    End Structure
 
    '-----------------------------------------------------------------------------------------------

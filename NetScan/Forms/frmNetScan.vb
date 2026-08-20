@@ -1,19 +1,23 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' NetScan: frmNetScan.vb: Main form
 '    © 2026 Remus Rigo
-'       v1.0.20260804
+'       v1.0.20260820
 '--------------------------------------------------------------------------------------------------
 
+Imports System.IO
 Imports System.Net
 Imports System.Net.Sockets
 Imports System.Runtime.InteropServices
 Imports System.Threading
+Imports System.Xml
 
 Imports NetScan.API
 
 Public Class frmNetScan
 
    Private Const SYSMENU_ABOUT_ID As UInteger = 1000
+
+   Private cfg As New AppSettings()
 
    Private pbLoad As rrProgressBar
 
@@ -121,6 +125,8 @@ Public Class frmNetScan
             item.SubItems.Add("") ' Host Name
             item.SubItems.Add("") ' MAC Address
             item.SubItems.Add("") ' Vendor
+            item.SubItems.Add("") ' TTL
+            item.SubItems.Add("") ' Type
             item.Checked = True
             item.Tag = IPToDWORD(currentIP)
          Next
@@ -136,7 +142,7 @@ Public Class frmNetScan
       pbLoad.Maximum = itemsToProcess.Count
       pbLoad.Value = 0
       Dim completedCount = 0
-
+      Me.Text = $"{appTitle}: Scanning {itemsToProcess.Count} devices..."
       bkTask = Task.Run(Sub()
                            Parallel.For(0, itemsToProcess.Count, Sub(index As Integer)
                                                                     If appExit Then Exit Sub
@@ -144,12 +150,14 @@ Public Class frmNetScan
                                                                     Dim processItem = itemsToProcess(index)
                                                                     Dim targetAddr = CUInt(processItem.Tag)
                                                                     If targetAddr = INADDR_NONE Then Exit Sub
+                                                                    Dim currentIP = processItem.SubItems(1).Text
                                                                     Dim hostName As String = ""
                                                                     Dim macAddress As String = ""
                                                                     Dim vendor As String = "Unknown"
 
 
-                                                                    Dim isOnline = PingIP(targetAddr)
+                                                                    Dim pingResult = PingIPWithTtl(currentIP)
+                                                                    Dim isOnline = pingResult.Success
                                                                     If isOnline Then
                                                                        If Not hideHostname Then hostName = GetHostNameFromIP(targetAddr)
                                                                        If Not hideMAC Then macAddress = GetMACFromIP(targetAddr)
@@ -162,11 +170,13 @@ Public Class frmNetScan
 
                                                                     If Not appExit Then
                                                                        Invoke(Sub()
+                                                                                 processItem.Text = If(isOnline, "Online", "Offline")
                                                                                  If isOnline Then
-                                                                                    processItem.Text = If(isOnline, "Online", "Offline")
                                                                                     If Not hideHostname Then processItem.SubItems(2).Text = hostName
                                                                                     If Not hideMAC Then processItem.SubItems(3).Text = macAddress
                                                                                     If Not hideVendor Then processItem.SubItems(4).Text = vendor
+                                                                                    processItem.SubItems(5).Text = pingResult.Ttl.ToString()
+                                                                                    processItem.SubItems(6).Text = DetectOSFromTTL(pingResult.Ttl)
                                                                                  Else
                                                                                     If hideOffline Then lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
                                                                                  End If
@@ -195,11 +205,13 @@ Public Class frmNetScan
       lvDevices.View = View.Details
       lvDevices.CheckBoxes = True
       lvDevices.FullRowSelect = True
-      lvDevices.Columns.Add("Status", 100, HorizontalAlignment.Left)
-      lvDevices.Columns.Add("IP Address", 120, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("Status", 80, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("IP Address", 100, HorizontalAlignment.Left)
       lvDevices.Columns.Add("Hostname", 120, HorizontalAlignment.Left)
       lvDevices.Columns.Add("MAC Address", 120, HorizontalAlignment.Left)
       lvDevices.Columns.Add("Vendor", 225, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("TTL", 35, HorizontalAlignment.Left)
+      lvDevices.Columns.Add("Type", 160, HorizontalAlignment.Left)
 
       pbLoad = New rrProgressBar()
       pbLoad.Dock = DockStyle.None
@@ -208,14 +220,33 @@ Public Class frmNetScan
       pbLoad.Size = New Size(Me.ClientSize.Width - 10, 20)
       Me.Controls.Add(pbLoad)
 
-      txtBoxIPRange.Text = IPToRange(GetLocalIP())
+      Dim exePath = Application.ExecutablePath
+      Dim cfgFile As String = Path.Combine(Path.GetDirectoryName(exePath), Path.GetFileNameWithoutExtension(exePath) & ".json")
+      If File.Exists(cfgFile) Then
+         cfg.LoadSettings()
+         txtBoxIPRange.Text = cfg.IPRange
+      Else
+         txtBoxIPRange.Text = IPToRange(GetLocalIP())
+      End If
 
-      LoadOuiTable()
+      Dim csvFile As String = Path.Combine(Path.GetDirectoryName(exePath), "oui.csv")
+      Dim ouiCount As Integer
+      If File.Exists(csvFile) Then
+         ouiCount = LoadExternalOuiTable()
+      Else
+         ouiCount = LoadInternalOuiTable()
+      End If
+
+      Me.Text = appTitle & " [" & ouiCount & " OUI items found]"
+
    End Sub
 
    '-----------------------------------------------------------------------------------------------
    ' frmNetScan: OnFormClosing
    Private Sub frmNetScan_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+      cfg.IPRange = txtBoxIPRange.Text
+      cfg.SaveSettings()
+
       If Not isScanning Then Return
 
       e.Cancel = True

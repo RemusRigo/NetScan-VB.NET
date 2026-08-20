@@ -37,6 +37,8 @@ Just run NetScan.exe
 
 ## Roadmap
 
+* 2026-08-20: Add: Device OS
+* 2026-08-20: Add: TTL
 * 2026-08-04: Add: About form
 * 2026-08-04: Add: [Radar Icon](https://www.flaticon.com/free-icon/radar_6989456) by [bzzrincantation](https://www.flaticon.com/authors/bzzrincantation)
 * 2026-08-04: Add: Button icons

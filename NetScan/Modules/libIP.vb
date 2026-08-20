@@ -9,7 +9,9 @@ Imports System.Net
 Imports System.Net.Http
 Imports System.Net.Sockets
 Imports System.Runtime.InteropServices
+Imports System.Text
 Imports System.Threading
+Imports NetScan.IPHlpAPI
 
 Module libIP
 
@@ -81,6 +83,62 @@ Module libIP
       End Try
    End Function
 
+   Public Function PingIPWithTtl(ipAddress As String) As (Success As Boolean, RoundTripMs As UInteger, Ttl As Byte)
+      Dim handle As IntPtr = IcmpCreateFile()
+      If handle = IntPtr.Zero Then
+         Return (False, 0, 0)
+      End If
+
+      Try
+         Dim addr As UInteger = BitConverter.ToUInt32(Net.IPAddress.Parse(ipAddress).GetAddressBytes(), 0)
+         Dim requestBytes As Byte() = Encoding.ASCII.GetBytes("abcdefghijklmnopqrstuvwabcdefghi") ' 32 bytes, typical Windows ping payload
+         Dim requestPtr As IntPtr = Marshal.AllocHGlobal(requestBytes.Length)
+
+         Dim replySize As Integer = Marshal.SizeOf(Of ICMP_ECHO_REPLY)() + requestBytes.Length + 8
+         Dim replyBuffer As IntPtr = Marshal.AllocHGlobal(replySize)
+
+         Try
+            Marshal.Copy(requestBytes, 0, requestPtr, requestBytes.Length)
+
+            Dim result As UInteger = IcmpSendEcho(
+                   handle, addr, requestPtr, CUShort(requestBytes.Length),
+                   IntPtr.Zero, replyBuffer, CUInt(replySize), 3000)
+
+            If result <> 0 Then
+               Dim reply = Marshal.PtrToStructure(Of ICMP_ECHO_REPLY)(replyBuffer)
+               If reply.Status = 0 Then
+                  Return (True, reply.RoundTripTime, reply.Options.Ttl)
+               End If
+            End If
+            Return (False, 0, 0)
+         Finally
+            Marshal.FreeHGlobal(requestPtr)
+            Marshal.FreeHGlobal(replyBuffer)
+         End Try
+      Finally
+         IcmpCloseHandle(handle)
+      End Try
+   End Function
+
+   Public Function DetectOSFromTTL(ttl As Integer) As String
+      Select Case ttl
+         Case 30 : Return "SunOS"
+         Case 48 : Return "BSDI"
+         Case 50 : Return "Windows 95/98/ME"
+         Case 60 : Return "AIX"
+         Case 64 : Return "Android/Linux/macOS/Unix/FreeBSD/"
+         Case 100 : Return "IBM OS/2"
+         Case 127 : Return "macOS"
+         Case 128 : Return "Windows"
+         Case 190 : Return "macOS"
+         Case 200 : Return "HP-UX"
+         Case 240 : Return "Novell"
+         Case 254 : Return "Solaris/AIX"
+         Case 255 : Return "iOS/Cisco"
+         Case Else : Return "Not defined"
+      End Select
+   End Function
+
    '-----------------------------------------------------------------------------------------------
    ' GetHostNameFromIP
    ''' <summary>Returns the host name for a given IP address</summary>
@@ -123,8 +181,8 @@ Module libIP
    End Function
 
    '-----------------------------------------------------------------------------------------------
-   ' Load the OUI table from a csv file
-   Public Sub LoadOuiTable()
+   ' Load the OUI table from an external csv file
+   Public Function LoadExternalOuiTable() As Integer
       Dim path = System.IO.Path.Combine(Application.StartupPath, "oui.csv")
       Try
          For Each line In File.ReadLines(path)
@@ -136,11 +194,47 @@ Module libIP
                ouiTable(assignment) = orgName
             End If
          Next
+      Catch ex As FileNotFoundException
+         Return -1
       Catch ex As Exception
          MessageBox.Show($"Could not load OUI table: {ex.Message}")
       End Try
-      'MessageBox.Show($"Loaded {ouiTable.Count} entries")
-   End Sub
+      Return ouiTable.Count
+   End Function
+
+   '-----------------------------------------------------------------------------------------------
+   ' Load the OUI table from an internal csv file
+   Public Function LoadInternalOuiTable() As Integer
+      Try
+         Dim asm = System.Reflection.Assembly.GetExecutingAssembly()
+         Dim resourceName = asm.GetManifestResourceNames().FirstOrDefault(Function(n) n.EndsWith("oui.csv", StringComparison.OrdinalIgnoreCase))
+
+         If resourceName Is Nothing Then
+            Return -1
+         End If
+
+         Using stream = asm.GetManifestResourceStream(resourceName)
+            Using reader As New StreamReader(stream)
+               Dim line As String
+               Do
+                  line = reader.ReadLine()
+                  If line Is Nothing Then Exit Do
+
+                  Dim commaIdx = line.IndexOf(","c)
+                  If commaIdx > 0 Then
+                     Dim assignment = line.Substring(0, commaIdx).Trim().ToUpperInvariant()
+                     Dim orgName = line.Substring(commaIdx + 1).Trim()
+                     orgName = orgName.Trim(""""c) ' strip surrounding quotes, if present
+                     ouiTable(assignment) = orgName
+                  End If
+               Loop
+            End Using
+         End Using
+      Catch ex As Exception
+         MessageBox.Show($"Could not load OUI table: {ex.Message}")
+      End Try
+      Return ouiTable.Count
+   End Function
 
    '-----------------------------------------------------------------------------------------------
    ' GetVendorFromMAC: Look up the vendor name from the OUI table (offline)
