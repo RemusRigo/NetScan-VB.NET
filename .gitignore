@@ -13,7 +13,7 @@ __history		# Delphi
 __recovery		# Delphi
 .claude			# Claude Code
 .mypy_cache		# Python
-.vs			# Visual Studio
+.vs/			# Visual Studio
 [Bb]in			# compiler binaries
 [Bb]uild		# Python
 [Dd]ist			# Python
