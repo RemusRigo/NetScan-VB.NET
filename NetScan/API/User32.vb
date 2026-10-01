@@ -1,5 +1,5 @@
 ﻿'--------------------------------------------------------------------------------------------------
-' user32.dll Functions formanaging windows, handling input, and other core user interface tasks.
+' user32.dll Functions for formanaging windows, handling input, and other core user interface tasks.
 '
 '   © 2026 Remus Rigo
 '      v1.0.20260804

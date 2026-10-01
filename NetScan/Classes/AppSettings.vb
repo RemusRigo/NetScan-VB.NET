@@ -1,5 +1,10 @@
-﻿Imports System.IO
-Imports System.Xml
+﻿'--------------------------------------------------------------------------------------------------
+' AppSetting.vb: Load/Save settings to JSON file
+'    © 2026 Remus Rigo
+'       v1.0.20260820
+'--------------------------------------------------------------------------------------------------
+
+Imports System.IO
 Imports System.Text.Json
 Imports System.Text.Json.Nodes
 
@@ -27,10 +32,6 @@ Public Class AppSettings
 
    ' Save Settings to JSON file
    Public Sub SaveSettings()
-      'Dim jsonIPRange As New JsonObject From {
-      '    {"IP Range", IPRange}
-      '}
-
       Dim jsonRoot As New JsonObject From {
           {"IP Range", IPRange}
       }

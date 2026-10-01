@@ -1,46 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-   <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <StartupObject>Sub Main</StartupObject>
-    <UseWindowsForms>true</UseWindowsForms>
-    <MyType>WindowsForms</MyType>
-    <Platforms>x64;x86</Platforms>
-    <ApplicationIcon>Res\Radar.ico</ApplicationIcon>
-  </PropertyGroup>
+   <PropertyGroup>
+      <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+      <AssemblyName>NetScan</AssemblyName>
+      <MyType>WindowsForms</MyType>
+      <OutputType>WinExe</OutputType>
+      <StartupObject>Sub Main</StartupObject>
+      <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
+      <UseWindowsForms>true</UseWindowsForms>
+      <Platforms>x64;x86</Platforms>
+      <ApplicationIcon>Res\Radar.ico</ApplicationIcon>
+      <GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse>
+   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-   <PlatformTarget>x86</PlatformTarget>
-    <OutputPath>bin\Debug\net10.0-windows\x86\</OutputPath>
-</PropertyGroup>
+   <PropertyGroup Condition="'$(TargetFramework)' != ''">
+      <TfmName>$(TargetFramework.Replace('-windows', ''))</TfmName>
+      <OutputPath>..\bin\$(Configuration)\$(TfmName) $(Platform)\</OutputPath>
+      <IntermediateOutputPath>obj\$(Configuration)\$(TfmName) $(Platform)\</IntermediateOutputPath>
+   </PropertyGroup>
 
-<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-   <PlatformTarget>x64</PlatformTarget>
-    <OutputPath>bin\Debug\net10.0-windows\x64\</OutputPath>
-</PropertyGroup>
-
-<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-   <PlatformTarget>x86</PlatformTarget>
-   <OutputPath>bin\Release\net10.0-windows\x86\</OutputPath>
-</PropertyGroup>
-
-<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-   <PlatformTarget>x64</PlatformTarget>
-   <OutputPath>bin\Release\net10.0-windows\x64\</OutputPath>
-</PropertyGroup>
-
-<ItemGroup>
-  <None Remove="Res\oui.csv" />
-</ItemGroup>
+   <PropertyGroup Condition="'$(Platform)' == 'x86' Or '$(Platform)' == 'x64'">
+      <PlatformTarget>$(Platform)</PlatformTarget>
+   </PropertyGroup>
 
 <ItemGroup>
   <Content Include="Res\Radar.ico" />
-</ItemGroup>
-
-<ItemGroup>
-  <EmbeddedResource Include="Res\oui.csv" />
 </ItemGroup>
 
     <ItemGroup>

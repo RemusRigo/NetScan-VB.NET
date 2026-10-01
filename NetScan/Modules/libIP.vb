@@ -1,7 +1,7 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' libIP.vb: IP functions
 '    © 2026 Remus Rigo
-'       v1.0.20260804
+'       v1.0.20260820
 '--------------------------------------------------------------------------------------------------
 
 Imports System.IO
@@ -10,8 +10,7 @@ Imports System.Net.Http
 Imports System.Net.Sockets
 Imports System.Runtime.InteropServices
 Imports System.Text
-Imports System.Threading
-Imports NetScan.IPHlpAPI
+Imports NetScan.API
 
 Module libIP
 
@@ -22,10 +21,9 @@ Module libIP
    Private ReadOnly ouiTable As New Dictionary(Of String, String)()
 
    '-----------------------------------------------------------------------------------------------
-   ' IPToDWORD
+   ' IP To DWORD
    ''' <summary>Converts an IP address to a DWORD value
-   ''' this is the default data type used by the Windows API for IPv4 addresses,
-   ''' represented as a 32-bit unsigned integer in network byte order
+   ''' this is the default data type used by the Windows API for IPv4 addresses, represented as a 32-bit unsigned integer in network byte order
    ''' </summary>
    Public Function IPToDWORD(ip As String) As UInteger
       Dim addr As IPAddress = Nothing
@@ -36,7 +34,7 @@ Module libIP
    End Function
 
    '-----------------------------------------------------------------------------------------------
-   ' IPToRange
+   ' IP To Range
    ''' <summary>Convert IP to Range: "192.168.1.13" -> "192.168.1.1-255".</summary>
    Public Function IPToRange(ip As String) As String
       Dim lastDot = ip.LastIndexOf("."c)
@@ -83,7 +81,9 @@ Module libIP
       End Try
    End Function
 
-   Public Function PingIPWithTtl(ipAddress As String) As (Success As Boolean, RoundTripMs As UInteger, Ttl As Byte)
+   '-----------------------------------------------------------------------------------------------
+   ' PingIPWithTTL
+   Public Function PingIPWithTTL(ipAddress As String) As (Success As Boolean, RoundTripMs As UInteger, Ttl As Byte)
       Dim handle As IntPtr = IcmpCreateFile()
       If handle = IntPtr.Zero Then
          Return (False, 0, 0)
@@ -91,7 +91,7 @@ Module libIP
 
       Try
          Dim addr As UInteger = BitConverter.ToUInt32(Net.IPAddress.Parse(ipAddress).GetAddressBytes(), 0)
-         Dim requestBytes As Byte() = Encoding.ASCII.GetBytes("abcdefghijklmnopqrstuvwabcdefghi") ' 32 bytes, typical Windows ping payload
+         Dim requestBytes As Byte() = Encoding.ASCII.GetBytes("abcdefgremusrig0hijklmnopqrstuvw") ' 32 bytes, typical Windows ping payload
          Dim requestPtr As IntPtr = Marshal.AllocHGlobal(requestBytes.Length)
 
          Dim replySize As Integer = Marshal.SizeOf(Of ICMP_ECHO_REPLY)() + requestBytes.Length + 8
@@ -120,6 +120,9 @@ Module libIP
       End Try
    End Function
 
+   '-----------------------------------------------------------------------------------------------
+   ' DetectOSFromTTL
+   ''' <summary>the TTL value for an IP packet is strictly determined by the operating system sending the packet</summary>
    Public Function DetectOSFromTTL(ttl As Integer) As String
       Select Case ttl
          Case 30 : Return "SunOS"
@@ -163,21 +166,6 @@ Module libIP
          Return String.Join("-", macBytes.Take(CInt(macLen)).Select(Function(b) b.ToString("x2")))
       End If
       Return "Unknown"
-   End Function
-
-   '-----------------------------------------------------------------------------------------------
-   ' GetVendorFromMAC_Online
-   ''' <summary>Get the vendor name from a MAC address using the IEEE OUI database (online).</summary>
-   Public Async Function GetVendorFromMAC_Online(macAddr As String) As Task(Of String)
-      If macAddr = "Unknown" OrElse String.IsNullOrEmpty(macAddr) Then Return "Unknown"
-
-      Try
-         Dim url = $"https://api.macvendors.com/{macAddr}"
-         Dim response = Await httpClient.GetStringAsync(url)
-         Return response
-      Catch
-         Return "Unknown"
-      End Try
    End Function
 
    '-----------------------------------------------------------------------------------------------
@@ -234,6 +222,21 @@ Module libIP
          MessageBox.Show($"Could not load OUI table: {ex.Message}")
       End Try
       Return ouiTable.Count
+   End Function
+
+   '-----------------------------------------------------------------------------------------------
+   ' GetVendorFromMAC_Online
+   ''' <summary>Get the vendor name from a MAC address using the IEEE OUI database (online).</summary>
+   Public Async Function GetVendorFromMAC_Online(macAddr As String) As Task(Of String)
+      If macAddr = "Unknown" OrElse String.IsNullOrEmpty(macAddr) Then Return "Unknown"
+
+      Try
+         Dim url = $"https://api.macvendors.com/{macAddr}"
+         Dim response = Await httpClient.GetStringAsync(url)
+         Return response
+      Catch
+         Return "Unknown"
+      End Try
    End Function
 
    '-----------------------------------------------------------------------------------------------

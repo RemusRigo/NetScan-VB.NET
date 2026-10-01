@@ -25,7 +25,7 @@ Partial Class frmNetScan
       components = New ComponentModel.Container()
       Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmNetScan))
       tsBtn = New ToolStrip()
-      txBtnScan = New ToolStripButton()
+      tsBtnScan = New ToolStripButton()
       tsBtnSep1 = New ToolStripSeparator()
       tsBtnHideOffline = New ToolStripButton()
       tsBtnHideHostname = New ToolStripButton()
@@ -45,21 +45,21 @@ Partial Class frmNetScan
       ' 
       ' tsBtn
       ' 
-      tsBtn.Items.AddRange(New ToolStripItem() {txBtnScan, tsBtnSep1, tsBtnHideOffline, tsBtnHideHostname, tsBtnHideMAC, tsBtnHideVendor, tsBtnSep2})
+      tsBtn.Items.AddRange(New ToolStripItem() {tsBtnScan, tsBtnSep1, tsBtnHideOffline, tsBtnHideHostname, tsBtnHideMAC, tsBtnHideVendor, tsBtnSep2})
       tsBtn.Location = New Point(0, 0)
       tsBtn.Name = "tsBtn"
       tsBtn.Size = New Size(1008, 25)
       tsBtn.TabIndex = 0
       ' 
-      ' txBtnScan
+      ' tsBtnScan
       ' 
-      txBtnScan.DisplayStyle = ToolStripItemDisplayStyle.Image
-      txBtnScan.Image = CType(resources.GetObject("txBtnScan.Image"), Image)
-      txBtnScan.ImageTransparentColor = Color.Magenta
-      txBtnScan.Name = "txBtnScan"
-      txBtnScan.Size = New Size(23, 22)
-      txBtnScan.Text = "Scan"
-      txBtnScan.ToolTipText = "Scan Range"
+      tsBtnScan.DisplayStyle = ToolStripItemDisplayStyle.Image
+      tsBtnScan.Image = CType(resources.GetObject("tsBtnScan.Image"), Image)
+      tsBtnScan.ImageTransparentColor = Color.Magenta
+      tsBtnScan.Name = "tsBtnScan"
+      tsBtnScan.Size = New Size(23, 22)
+      tsBtnScan.Text = "Scan"
+      tsBtnScan.ToolTipText = "Scan Range"
       ' 
       ' tsBtnSep1
       ' 
@@ -189,7 +189,7 @@ Partial Class frmNetScan
    Friend WithEvents scNetScan As SplitContainer
    Friend WithEvents txtBoxIPRange As TextBox
    Friend WithEvents lvDevices As ListView
-   Friend WithEvents txBtnScan As ToolStripButton
+   Friend WithEvents tsBtnScan As ToolStripButton
    Friend WithEvents tsBtnHideOffline As ToolStripButton
    Friend WithEvents tsBtnSep1 As ToolStripSeparator
    Friend WithEvents tsBtnSep2 As ToolStripSeparator

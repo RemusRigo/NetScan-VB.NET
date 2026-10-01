@@ -1,15 +1,14 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' NetScan: frmNetScan.vb: Main form
 '    © 2026 Remus Rigo
-'       v1.0.20260820
+'       v1.1.20261001
 '--------------------------------------------------------------------------------------------------
 
 Imports System.IO
 Imports System.Net
+Imports System.Net.NetworkInformation
 Imports System.Net.Sockets
-Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports System.Xml
 
 Imports NetScan.API
 
@@ -17,31 +16,34 @@ Public Class frmNetScan
 
    Private Const SYSMENU_ABOUT_ID As UInteger = 1000
 
+   ' Load/Save settings
    Private cfg As New AppSettings()
 
+   ' Percent ProgressBar
    Private pbLoad As rrProgressBar
-
    Private itemsMin As Integer
    Private itemsMax As Integer
 
+   ' Hide/Show columns
    Private hideOffline As Boolean = False
    Private hideMAC As Boolean = False
    Private hideHostname As Boolean = False
    Private hideVendor As Boolean = False
 
+   ' Task specific data
    Private bkTask As Task
    Private isScanning As Boolean = False
    Private appExit As Boolean = False
 
-   Private ReadOnly vendorThrottle As New SemaphoreSlim(2) ' max 2 concurrent vendor lookups
-
    Private Structure ParsedRange
-      Public BaseIP As String
-      Public MinIP As Integer
-      Public MaxIP As Integer
-      Public Total As Integer
+      Public BaseIP As String ' 192.168.0.
+      Public MinIP As Integer ' from 1
+      Public MaxIP As Integer ' to 255
+      Public Total As Integer ' total IP's (from min to max)
    End Structure
 
+   '-----------------------------------------------------------------------------------------------
+   ' OnHandleCreated: add About menu item
    Protected Overrides Sub OnHandleCreated(e As EventArgs)
       MyBase.OnHandleCreated(e)
       Dim hSysMenu As IntPtr = GetSystemMenu(Me.Handle, False)
@@ -50,6 +52,8 @@ Public Class frmNetScan
       AppendMenu(hSysMenu, MF_STRING, SYSMENU_ABOUT_ID, "About...")
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' WndProc: open About DialogBox
    Protected Overrides Sub WndProc(ByRef m As Message)
       MyBase.WndProc(m)
       If m.Msg = WM_SYSCOMMAND Then
@@ -108,6 +112,21 @@ Public Class frmNetScan
 
       Return results.Count > 0
    End Function
+
+   Private Sub ScanLocalIP()
+      For Each ni In NetworkInterface.GetAllNetworkInterfaces()
+         If ni.OperationalStatus <> OperationalStatus.Up Then Continue For
+
+         For Each ip In ni.GetIPProperties().UnicastAddresses
+            ' AddressFamily.InterNetwork = IPv4 addresses
+            ' AddressFamily.InterNetworkv6 = IPv6 addresses
+            ' skip loopback addresses
+            If ip.Address.AddressFamily = AddressFamily.InterNetwork AndAlso Not IPAddress.IsLoopback(ip.Address) Then
+               txtBoxIPRange.AppendText(IPToRange(ip.Address.ToString) & vbCrLf)
+            End If
+         Next
+      Next
+   End Sub
 
    '-----------------------------------------------------------------------------------------------
    ' ScanRanges
@@ -202,6 +221,7 @@ Public Class frmNetScan
    Private Sub frmNetScan_Load(sender As Object, e As EventArgs) Handles MyBase.Load
       Me.Text = appTitle
 
+      ' build ListView
       lvDevices.View = View.Details
       lvDevices.CheckBoxes = True
       lvDevices.FullRowSelect = True
@@ -213,6 +233,7 @@ Public Class frmNetScan
       lvDevices.Columns.Add("TTL", 35, HorizontalAlignment.Left)
       lvDevices.Columns.Add("Type", 160, HorizontalAlignment.Left)
 
+      ' build ProgressBar
       pbLoad = New rrProgressBar()
       pbLoad.Dock = DockStyle.None
       pbLoad.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
@@ -220,15 +241,18 @@ Public Class frmNetScan
       pbLoad.Size = New Size(Me.ClientSize.Width - 10, 20)
       Me.Controls.Add(pbLoad)
 
+      ' Load settings
       Dim exePath = Application.ExecutablePath
-      Dim cfgFile As String = Path.Combine(Path.GetDirectoryName(exePath), Path.GetFileNameWithoutExtension(exePath) & ".json")
+      Dim cfgFile As String = Path.Combine(Path.GetDirectoryName(exePath), Path.GetFileNameWithoutExtension(exePath) & ".cfg")
       If File.Exists(cfgFile) Then
          cfg.LoadSettings()
          txtBoxIPRange.Text = cfg.IPRange
       Else
-         txtBoxIPRange.Text = IPToRange(GetLocalIP())
+         'txtBoxIPRange.Text = IPToRange(GetLocalIP())
+         ScanLocalIP()
       End If
 
+      ' Load OIU file
       Dim csvFile As String = Path.Combine(Path.GetDirectoryName(exePath), "oui.csv")
       Dim ouiCount As Integer
       If File.Exists(csvFile) Then
@@ -244,6 +268,7 @@ Public Class frmNetScan
    '-----------------------------------------------------------------------------------------------
    ' frmNetScan: OnFormClosing
    Private Sub frmNetScan_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+      ' save settings
       cfg.IPRange = txtBoxIPRange.Text
       cfg.SaveSettings()
 
@@ -265,8 +290,8 @@ Public Class frmNetScan
    End Sub
 
    '-----------------------------------------------------------------------------------------------
-   ' txBtnScan: OnClick
-   Private Sub txBtnScan_Click(sender As Object, e As EventArgs) Handles txBtnScan.Click
+   ' tsBtnScan: OnClick
+   Private Sub tsBtnScan_Click(sender As Object, e As EventArgs) Handles tsBtnScan.Click
       tsBtn.Enabled = False
       Dim ranges As New List(Of ParsedRange)()
       If Not ParseMultipleRanges(txtBoxIPRange.Text, ranges) Then
@@ -282,6 +307,8 @@ Public Class frmNetScan
       hideOffline = tsBtnHideOffline.Checked
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnHideHostname: OnClick
    Private Sub tsBtnHideHostname_Click(sender As Object, e As EventArgs) Handles tsBtnHideHostname.Click
       hideHostname = tsBtnHideHostname.Checked
       If hideHostname Then
@@ -291,6 +318,8 @@ Public Class frmNetScan
       End If
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnHideMAC: OnClick
    Private Sub tsBtnHideMAC_Click(sender As Object, e As EventArgs) Handles tsBtnHideMAC.Click
       hideMAC = tsBtnHideMAC.Checked
       If hideMAC Then
@@ -300,6 +329,8 @@ Public Class frmNetScan
       End If
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnHideVendor: OnClick
    Private Sub tsBtnHideVendor_Click(sender As Object, e As EventArgs) Handles tsBtnHideVendor.Click
       hideVendor = tsBtnHideVendor.Checked
       If hideVendor Then
