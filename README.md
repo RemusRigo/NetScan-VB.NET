@@ -11,12 +11,6 @@ A Network Scanner utility
 
 
 
-## Installation
-
-Just run NetScan.exe
-
-
-
 ## Features
 
 * Scan multiple ranges
@@ -27,16 +21,29 @@ Just run NetScan.exe
 
 
 
+## Downloads \& Runtimes
+
+This project is available in multiple builds to support different environments.
+The release contains following Frameworks:
+
+|Target Framework|Supported Architectures|Required Runtime|
+|-|-|-|
+|**.NET 8.0**|x86, x64|[.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) *(or Desktop Runtime for UI apps)*|
+|**.NET 10.0**|x86, x64|[.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) *(or Desktop Runtime for UI apps)*|
+
+
+
 ## Statistics
 
-![status](https://img.shields.io/badge/status-completed-brightgreen)
-<br>
+![status](https://img.shields.io/badge/status-completed-brightgreen)<br>
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-VB.NET/total)
 
 
 
 ## Roadmap
 
+* 2026-10-01: Upd: TTL values
+* 2026-10-01: Upd: Scan all Network Interfaces and extract local IP (ignore loopbacks, inactive netwick and IPv6)
 * 2026-08-20: Add: Device OS
 * 2026-08-20: Add: TTL
 * 2026-08-04: Add: About form
