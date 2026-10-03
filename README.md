@@ -18,7 +18,7 @@ A Network Scanner utility
 * Display/hide MAC Address
 * Display/hide Hostname
 * Display/hide Vendor (offline version)
-
+* Pause/Stop scanning (on pause current threads continue and no new ones will start)
 
 
 ## Downloads \& Runtimes
@@ -42,6 +42,9 @@ The release contains following Frameworks:
 
 ## Roadmap
 
+* 2026-10-03: Add: Implement Pause/Stop
+* 2026-10-02: Add: Save/Load IP Ranges as presets
+* 2026-10-02: Upd: Change button size and icons
 * 2026-10-01: Upd: TTL values
 * 2026-10-01: Upd: Scan all Network Interfaces and extract local IP (ignore loopbacks, inactive netwick and IPv6)
 * 2026-08-20: Add: Device OS

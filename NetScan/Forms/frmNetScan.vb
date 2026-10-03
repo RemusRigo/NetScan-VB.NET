@@ -1,7 +1,7 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' NetScan: frmNetScan.vb: Main form
 '    © 2026 Remus Rigo
-'       v1.1.20261001
+'       v1.1.20261002
 '--------------------------------------------------------------------------------------------------
 
 Imports System.IO
@@ -18,6 +18,7 @@ Public Class frmNetScan
 
    ' Load/Save settings
    Private cfg As New AppSettings()
+   Private presetsDir As String = Path.Combine(Application.StartupPath, "Presets")
 
    ' Percent ProgressBar
    Private pbLoad As rrProgressBar
@@ -34,6 +35,12 @@ Public Class frmNetScan
    Private bkTask As Task
    Private isScanning As Boolean = False
    Private appExit As Boolean = False
+
+   ' Pause/Stop scan
+   Private scanCTS As CancellationTokenSource
+   Private pauseGate As New ManualResetEventSlim(True) ' set = running, reset = paused
+   Private pbBarColor As Color
+   Private ReadOnly pbPausedColor As Color = Color.FromArgb(255, 185, 0)
 
    Private Structure ParsedRange
       Public BaseIP As String ' 192.168.0.
@@ -114,6 +121,7 @@ Public Class frmNetScan
    End Function
 
    Private Sub ScanLocalIP()
+      txtBoxIPRange.Clear()
       For Each ni In NetworkInterface.GetAllNetworkInterfaces()
          If ni.OperationalStatus <> OperationalStatus.Up Then Continue For
 
@@ -162,58 +170,99 @@ Public Class frmNetScan
       pbLoad.Value = 0
       Dim completedCount = 0
       Me.Text = $"{appTitle}: Scanning {itemsToProcess.Count} devices..."
+
+      scanCTS?.Dispose()
+      scanCTS = New CancellationTokenSource()
+      Dim token = scanCTS.Token
+      Dim opts As New ParallelOptions With {.CancellationToken = token}
+      pauseGate.Set()
+      SetScanState(True)
+
       bkTask = Task.Run(Sub()
-                           Parallel.For(0, itemsToProcess.Count, Sub(index As Integer)
-                                                                    If appExit Then Exit Sub
+                           Try
+                              Parallel.For(0, itemsToProcess.Count, opts, Sub(index As Integer)
+                                                                             ' block here while paused; Stop/exit releases the wait
+                                                                             Try
+                                                                                pauseGate.Wait(token)
+                                                                             Catch ex As OperationCanceledException
+                                                                                Exit Sub
+                                                                             End Try
+                                                                             If appExit Then Exit Sub
 
-                                                                    Dim processItem = itemsToProcess(index)
-                                                                    Dim targetAddr = CUInt(processItem.Tag)
-                                                                    If targetAddr = INADDR_NONE Then Exit Sub
-                                                                    Dim currentIP = processItem.SubItems(1).Text
-                                                                    Dim hostName As String = ""
-                                                                    Dim macAddress As String = ""
-                                                                    Dim vendor As String = "Unknown"
+                                                                             Dim processItem = itemsToProcess(index)
+                                                                             Dim targetAddr = CUInt(processItem.Tag)
+                                                                             If targetAddr = INADDR_NONE Then Exit Sub
+                                                                             Dim currentIP = processItem.SubItems(1).Text
+                                                                             Dim hostName As String = ""
+                                                                             Dim macAddress As String = ""
+                                                                             Dim vendor As String = "Unknown"
 
 
-                                                                    Dim pingResult = PingIPWithTtl(currentIP)
-                                                                    Dim isOnline = pingResult.Success
-                                                                    If isOnline Then
-                                                                       If Not hideHostname Then hostName = GetHostNameFromIP(targetAddr)
-                                                                       If Not hideMAC Then macAddress = GetMACFromIP(targetAddr)
-                                                                       If Not hideVendor Then
-                                                                          If macAddress <> "Unknown" Then
-                                                                             vendor = GetVendorFromMAC(macAddress)
-                                                                          End If
-                                                                       End If
-                                                                    End If
+                                                                             Dim pingResult = PingIPWithTTL(currentIP)
+                                                                             Dim isOnline = pingResult.Success
+                                                                             If isOnline Then
+                                                                                If Not hideHostname Then hostName = GetHostNameFromIP(targetAddr)
+                                                                                If Not hideMAC Then macAddress = GetMACFromIP(targetAddr)
+                                                                                If Not hideVendor Then
+                                                                                   If macAddress <> "Unknown" Then
+                                                                                      vendor = GetVendorFromMAC(macAddress)
+                                                                                   End If
+                                                                                End If
+                                                                             End If
 
-                                                                    If Not appExit Then
-                                                                       Invoke(Sub()
-                                                                                 processItem.Text = If(isOnline, "Online", "Offline")
-                                                                                 If isOnline Then
-                                                                                    If Not hideHostname Then processItem.SubItems(2).Text = hostName
-                                                                                    If Not hideMAC Then processItem.SubItems(3).Text = macAddress
-                                                                                    If Not hideVendor Then processItem.SubItems(4).Text = vendor
-                                                                                    processItem.SubItems(5).Text = pingResult.Ttl.ToString()
-                                                                                    processItem.SubItems(6).Text = DetectOSFromTTL(pingResult.Ttl)
-                                                                                 Else
-                                                                                    If hideOffline Then lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
-                                                                                 End If
-                                                                              End Sub)
-                                                                    End If
+                                                                             If Not appExit Then
+                                                                                Invoke(Sub()
+                                                                                          processItem.Text = If(isOnline, "Online", "Offline")
+                                                                                          If isOnline Then
+                                                                                             If Not hideHostname Then processItem.SubItems(2).Text = hostName
+                                                                                             If Not hideMAC Then processItem.SubItems(3).Text = macAddress
+                                                                                             If Not hideVendor Then processItem.SubItems(4).Text = vendor
+                                                                                             processItem.SubItems(5).Text = pingResult.Ttl.ToString()
+                                                                                             processItem.SubItems(6).Text = DetectOSFromTTL(pingResult.Ttl)
+                                                                                          Else
+                                                                                             If hideOffline Then lvDevices.Items.Remove(processItem) ' Remove offline devices if needed
+                                                                                          End If
+                                                                                       End Sub)
+                                                                             End If
 
-                                                                    Dim currentProgress = Interlocked.Increment(completedCount)
-                                                                    If Not appExit Then
-                                                                       Invoke(Sub() pbLoad.Value = Math.Min(currentProgress, pbLoad.Maximum))
-                                                                    End If
-                                                                 End Sub)
-                           ' end of Parallel.For
+                                                                             Dim currentProgress = Interlocked.Increment(completedCount)
+                                                                             If Not appExit Then
+                                                                                Invoke(Sub() pbLoad.Value = Math.Min(currentProgress, pbLoad.Maximum))
+                                                                             End If
+                                                                          End Sub)
+                              ' end of Parallel.For
+                           Catch ex As OperationCanceledException
+                              ' scan stopped by user or app exit
+                           End Try
+                           Dim wasStopped = token.IsCancellationRequested
                            Invoke(Sub()
                                      isScanning = False
-                                     tsBtn.Enabled = True
-                                     If Not appExit Then pbLoad.Value = pbLoad.Maximum
+                                     If appExit Then Return
+                                     If wasStopped Then
+                                        For Each item As ListViewItem In lvDevices.Items
+                                           If item.Text = "Pending" Then item.Text = "Skipped"
+                                        Next
+                                        Me.Text = $"{appTitle}: Scan stopped ({completedCount}/{itemsToProcess.Count})"
+                                     Else
+                                        pbLoad.Value = pbLoad.Maximum
+                                     End If
+                                     pbLoad.BarColor = pbBarColor
+                                     pbLoad.Invalidate()
+                                     SetScanState(False)
                                   End Sub)
                         End Sub)
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' SetScanState: enable/disable controls for scanning / idle
+   Private Sub SetScanState(scanning As Boolean)
+      tsBtnScan.Enabled = Not scanning
+      tsBtnPause.Enabled = scanning
+      tsBtnPause.Checked = False
+      tsBtnStop.Enabled = scanning
+      txtBoxIPRange.ReadOnly = scanning
+      contextMnuIP_rescan.Enabled = Not scanning
+      contextMnuIP_LoadPreset.Enabled = Not scanning
    End Sub
 
    '-----------------------------------------------------------------------------------------------
@@ -240,6 +289,9 @@ Public Class frmNetScan
       pbLoad.Location = New Point(3, Me.ClientSize.Height - pbLoad.Height - 5)
       pbLoad.Size = New Size(Me.ClientSize.Width - 10, 20)
       Me.Controls.Add(pbLoad)
+      pbBarColor = pbLoad.BarColor
+
+      SetScanState(False)
 
       ' Load settings
       Dim exePath = Application.ExecutablePath
@@ -261,7 +313,10 @@ Public Class frmNetScan
          ouiCount = LoadInternalOuiTable()
       End If
 
-      Me.Text = appTitle & " [" & ouiCount & " OUI items found]"
+      If ouiCount > 0 Then Me.Text = appTitle & " [" & ouiCount & " OUI items found]"
+
+      If Not System.IO.Directory.Exists(presetsDir) Then System.IO.Directory.CreateDirectory(presetsDir)
+
 
    End Sub
 
@@ -276,6 +331,7 @@ Public Class frmNetScan
 
       e.Cancel = True
       appExit = True ' signal background loop to stop
+      scanCTS?.Cancel() ' also releases workers waiting on pause
 
       If bkTask IsNot Nothing Then
          ' Application.DoEvents keeps the UI responsive during the brief wait,
@@ -292,13 +348,41 @@ Public Class frmNetScan
    '-----------------------------------------------------------------------------------------------
    ' tsBtnScan: OnClick
    Private Sub tsBtnScan_Click(sender As Object, e As EventArgs) Handles tsBtnScan.Click
-      tsBtn.Enabled = False
+      If isScanning Then Exit Sub
       Dim ranges As New List(Of ParsedRange)()
       If Not ParseMultipleRanges(txtBoxIPRange.Text, ranges) Then
          MessageBox.Show("Invalid range")
          Exit Sub
       End If
       ScanRanges(ranges)
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnPause: OnClick (toggles Pause / Resume)
+   Private Sub tsBtnPause_Click(sender As Object, e As EventArgs) Handles tsBtnPause.Click
+      If Not isScanning Then Exit Sub
+      If pauseGate.IsSet Then
+         pauseGate.Reset()
+         tsBtnPause.Checked = True
+         pbLoad.BarColor = pbPausedColor
+         Me.Text = $"{appTitle}: Paused ({pbLoad.Value}/{pbLoad.Maximum})"
+      Else
+         pauseGate.Set()
+         tsBtnPause.Checked = False
+         pbLoad.BarColor = pbBarColor
+         Me.Text = $"{appTitle}: Scanning {pbLoad.Maximum} devices..."
+      End If
+      pbLoad.Invalidate()
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' tsBtnStop: OnClick
+   Private Sub tsBtnStop_Click(sender As Object, e As EventArgs) Handles tsBtnStop.Click
+      If Not isScanning Then Exit Sub
+      tsBtnPause.Enabled = False
+      tsBtnStop.Enabled = False
+      Me.Text = $"{appTitle}: Stopping..."
+      scanCTS.Cancel() ' in-flight pings finish, no new ones start
    End Sub
 
    '-----------------------------------------------------------------------------------------------
@@ -340,4 +424,50 @@ Public Class frmNetScan
       End If
    End Sub
 
+   '-----------------------------------------------------------------------------------------------
+   ' contextMnuIP_rescan: OnClick
+   Private Sub contextMnuIP_rescan_Click(sender As Object, e As EventArgs) Handles contextMnuIP_rescan.Click
+      ScanLocalIP()
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' contextMnuIP_SaveAsPreset: OnClick
+   Private Sub contextMnuIP_SaveAsPreset_Click(sender As Object, e As EventArgs) Handles contextMnuIP_SaveAsPreset.Click
+      Using dlgSave As New SaveFileDialog()
+         dlgSave.Title = "Save Preset"
+         dlgSave.Filter = "Preset Files (*.preset)|*.preset"
+         dlgSave.DefaultExt = "preset"
+         dlgSave.InitialDirectory = presetsDir
+         If dlgSave.ShowDialog() = DialogResult.OK Then
+            Try
+               File.WriteAllText(dlgSave.FileName, txtBoxIPRange.Text)
+            Catch ex As Exception
+               MessageBox.Show("Error saving preset: " & ex.Message)
+            End Try
+         End If
+      End Using
+   End Sub
+
+   '-----------------------------------------------------------------------------------------------
+   ' contextMnuIP_LoadPreset: OnClick
+   Private Sub contextMnuIP_LoadPreset_Click(sender As Object, e As EventArgs) Handles contextMnuIP_LoadPreset.Click
+      Using dlgOpen As New OpenFileDialog()
+         dlgOpen.Title = "Load Preset"
+         dlgOpen.Filter = "Preset Files (*.preset)|*.preset"
+         dlgOpen.DefaultExt = "preset"
+         dlgOpen.InitialDirectory = presetsDir
+         If dlgOpen.ShowDialog() = DialogResult.OK Then
+            txtBoxIPRange.Clear()
+            Try
+               txtBoxIPRange.Text = File.ReadAllText(dlgOpen.FileName)
+            Catch ex As Exception
+               MessageBox.Show("Error loading preset: " & ex.Message)
+            End Try
+         End If
+      End Using
+   End Sub
+
+   Private Sub tsBtn_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs) Handles tsBtn.ItemClicked
+
+   End Sub
 End Class

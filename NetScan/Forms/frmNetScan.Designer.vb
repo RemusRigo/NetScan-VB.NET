@@ -33,22 +33,32 @@ Partial Class frmNetScan
       tsBtnHideVendor = New ToolStripButton()
       tsBtnSep2 = New ToolStripSeparator()
       scNetScan = New SplitContainer()
+      grpBoxIPRange = New GroupBox()
       txtBoxIPRange = New TextBox()
+      contextMnuIP = New ContextMenuStrip(components)
+      contextMnuIP_rescan = New ToolStripMenuItem()
+      contextMnuIP_SaveAsPreset = New ToolStripMenuItem()
+      contextMnuIP_LoadPreset = New ToolStripMenuItem()
       lvDevices = New ListView()
-      imgListButtons = New ImageList(components)
+      tsBtnPause = New ToolStripButton()
+      tsBtnStop = New ToolStripButton()
       tsBtn.SuspendLayout()
       CType(scNetScan, ComponentModel.ISupportInitialize).BeginInit()
       scNetScan.Panel1.SuspendLayout()
       scNetScan.Panel2.SuspendLayout()
       scNetScan.SuspendLayout()
+      grpBoxIPRange.SuspendLayout()
+      contextMnuIP.SuspendLayout()
       SuspendLayout()
       ' 
       ' tsBtn
       ' 
-      tsBtn.Items.AddRange(New ToolStripItem() {tsBtnScan, tsBtnSep1, tsBtnHideOffline, tsBtnHideHostname, tsBtnHideMAC, tsBtnHideVendor, tsBtnSep2})
+      tsBtn.AutoSize = False
+      tsBtn.ImageScalingSize = New Size(32, 32)
+      tsBtn.Items.AddRange(New ToolStripItem() {tsBtnScan, tsBtnPause, tsBtnStop, tsBtnSep1, tsBtnHideOffline, tsBtnHideHostname, tsBtnHideMAC, tsBtnHideVendor, tsBtnSep2})
       tsBtn.Location = New Point(0, 0)
       tsBtn.Name = "tsBtn"
-      tsBtn.Size = New Size(1008, 25)
+      tsBtn.Size = New Size(1008, 40)
       tsBtn.TabIndex = 0
       ' 
       ' tsBtnScan
@@ -57,14 +67,14 @@ Partial Class frmNetScan
       tsBtnScan.Image = CType(resources.GetObject("tsBtnScan.Image"), Image)
       tsBtnScan.ImageTransparentColor = Color.Magenta
       tsBtnScan.Name = "tsBtnScan"
-      tsBtnScan.Size = New Size(23, 22)
+      tsBtnScan.Size = New Size(36, 37)
       tsBtnScan.Text = "Scan"
       tsBtnScan.ToolTipText = "Scan Range"
-      ' 
+      '
       ' tsBtnSep1
       ' 
       tsBtnSep1.Name = "tsBtnSep1"
-      tsBtnSep1.Size = New Size(6, 25)
+      tsBtnSep1.Size = New Size(6, 40)
       ' 
       ' tsBtnHideOffline
       ' 
@@ -73,7 +83,7 @@ Partial Class frmNetScan
       tsBtnHideOffline.Image = CType(resources.GetObject("tsBtnHideOffline.Image"), Image)
       tsBtnHideOffline.ImageTransparentColor = Color.Magenta
       tsBtnHideOffline.Name = "tsBtnHideOffline"
-      tsBtnHideOffline.Size = New Size(23, 22)
+      tsBtnHideOffline.Size = New Size(36, 37)
       tsBtnHideOffline.Text = "Hide Offline"
       tsBtnHideOffline.ToolTipText = "Hide offline IP's"
       ' 
@@ -84,7 +94,7 @@ Partial Class frmNetScan
       tsBtnHideHostname.Image = CType(resources.GetObject("tsBtnHideHostname.Image"), Image)
       tsBtnHideHostname.ImageTransparentColor = Color.Magenta
       tsBtnHideHostname.Name = "tsBtnHideHostname"
-      tsBtnHideHostname.Size = New Size(23, 22)
+      tsBtnHideHostname.Size = New Size(36, 37)
       tsBtnHideHostname.Text = "Hide Hostname"
       ' 
       ' tsBtnHideMAC
@@ -94,7 +104,7 @@ Partial Class frmNetScan
       tsBtnHideMAC.Image = CType(resources.GetObject("tsBtnHideMAC.Image"), Image)
       tsBtnHideMAC.ImageTransparentColor = Color.Magenta
       tsBtnHideMAC.Name = "tsBtnHideMAC"
-      tsBtnHideMAC.Size = New Size(23, 22)
+      tsBtnHideMAC.Size = New Size(36, 37)
       tsBtnHideMAC.Text = "Hide MAC"
       ' 
       ' tsBtnHideVendor
@@ -104,64 +114,109 @@ Partial Class frmNetScan
       tsBtnHideVendor.Image = CType(resources.GetObject("tsBtnHideVendor.Image"), Image)
       tsBtnHideVendor.ImageTransparentColor = Color.Magenta
       tsBtnHideVendor.Name = "tsBtnHideVendor"
-      tsBtnHideVendor.Size = New Size(23, 22)
+      tsBtnHideVendor.Size = New Size(36, 37)
       tsBtnHideVendor.Text = "Hide Vendor"
       ' 
       ' tsBtnSep2
       ' 
       tsBtnSep2.Name = "tsBtnSep2"
-      tsBtnSep2.Size = New Size(6, 25)
+      tsBtnSep2.Size = New Size(6, 40)
       ' 
       ' scNetScan
       ' 
       scNetScan.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
       scNetScan.FixedPanel = FixedPanel.Panel1
-      scNetScan.Location = New Point(0, 25)
+      scNetScan.Location = New Point(0, 43)
       scNetScan.Name = "scNetScan"
       ' 
       ' scNetScan.Panel1
       ' 
-      scNetScan.Panel1.Controls.Add(txtBoxIPRange)
+      scNetScan.Panel1.Controls.Add(grpBoxIPRange)
       ' 
       ' scNetScan.Panel2
       ' 
       scNetScan.Panel2.Controls.Add(lvDevices)
-      scNetScan.Size = New Size(1008, 508)
+      scNetScan.Size = New Size(1008, 490)
       scNetScan.SplitterDistance = 130
       scNetScan.TabIndex = 2
+      ' 
+      ' grpBoxIPRange
+      ' 
+      grpBoxIPRange.Controls.Add(txtBoxIPRange)
+      grpBoxIPRange.Dock = DockStyle.Fill
+      grpBoxIPRange.Location = New Point(0, 0)
+      grpBoxIPRange.Name = "grpBoxIPRange"
+      grpBoxIPRange.Size = New Size(130, 490)
+      grpBoxIPRange.TabIndex = 3
+      grpBoxIPRange.TabStop = False
+      grpBoxIPRange.Text = "IP Range"
       ' 
       ' txtBoxIPRange
       ' 
       txtBoxIPRange.AcceptsReturn = True
-      txtBoxIPRange.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
       txtBoxIPRange.BackColor = Color.AliceBlue
-      txtBoxIPRange.Location = New Point(3, 0)
+      txtBoxIPRange.ContextMenuStrip = contextMnuIP
+      txtBoxIPRange.Dock = DockStyle.Fill
+      txtBoxIPRange.Location = New Point(3, 19)
       txtBoxIPRange.Multiline = True
       txtBoxIPRange.Name = "txtBoxIPRange"
-      txtBoxIPRange.Size = New Size(125, 508)
-      txtBoxIPRange.TabIndex = 2
+      txtBoxIPRange.Size = New Size(124, 468)
+      txtBoxIPRange.TabIndex = 3
+      ' 
+      ' contextMnuIP
+      ' 
+      contextMnuIP.Items.AddRange(New ToolStripItem() {contextMnuIP_rescan, contextMnuIP_SaveAsPreset, contextMnuIP_LoadPreset})
+      contextMnuIP.Name = "contextMnuIP"
+      contextMnuIP.Size = New Size(148, 70)
+      ' 
+      ' contextMnuIP_rescan
+      ' 
+      contextMnuIP_rescan.Name = "contextMnuIP_rescan"
+      contextMnuIP_rescan.Size = New Size(147, 22)
+      contextMnuIP_rescan.Text = "Rescan"
+      ' 
+      ' contextMnuIP_SaveAsPreset
+      ' 
+      contextMnuIP_SaveAsPreset.Name = "contextMnuIP_SaveAsPreset"
+      contextMnuIP_SaveAsPreset.Size = New Size(147, 22)
+      contextMnuIP_SaveAsPreset.Text = "Save as preset"
+      ' 
+      ' contextMnuIP_LoadPreset
+      ' 
+      contextMnuIP_LoadPreset.Name = "contextMnuIP_LoadPreset"
+      contextMnuIP_LoadPreset.Size = New Size(147, 22)
+      contextMnuIP_LoadPreset.Text = "Load preset"
       ' 
       ' lvDevices
       ' 
       lvDevices.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
       lvDevices.BackColor = Color.AliceBlue
-      lvDevices.Location = New Point(0, 0)
+      lvDevices.Location = New Point(0, 3)
       lvDevices.Name = "lvDevices"
-      lvDevices.Size = New Size(872, 508)
+      lvDevices.Size = New Size(872, 487)
       lvDevices.TabIndex = 0
       lvDevices.UseCompatibleStateImageBehavior = False
       ' 
-      ' imgListButtons
+      ' tsBtnPause
       ' 
-      imgListButtons.ColorDepth = ColorDepth.Depth32Bit
-      imgListButtons.ImageStream = CType(resources.GetObject("imgListButtons.ImageStream"), ImageListStreamer)
-      imgListButtons.TransparentColor = Color.Transparent
-      imgListButtons.Images.SetKeyName(0, "Play.png")
-      imgListButtons.Images.SetKeyName(1, "Online.png")
-      imgListButtons.Images.SetKeyName(2, "MAC.png")
-      imgListButtons.Images.SetKeyName(3, "Host.png")
-      imgListButtons.Images.SetKeyName(4, "Vendor.png")
+      tsBtnPause.DisplayStyle = ToolStripItemDisplayStyle.Image
+      tsBtnPause.Image = CType(resources.GetObject("tsBtnPause.Image"), Image)
+      tsBtnPause.ImageTransparentColor = Color.Magenta
+      tsBtnPause.Name = "tsBtnPause"
+      tsBtnPause.Size = New Size(36, 37)
+      tsBtnPause.Text = "Pause"
+      tsBtnPause.ToolTipText = "Pause / Resume scan"
+      '
+      ' tsBtnStop
       ' 
+      tsBtnStop.DisplayStyle = ToolStripItemDisplayStyle.Image
+      tsBtnStop.Image = CType(resources.GetObject("tsBtnStop.Image"), Image)
+      tsBtnStop.ImageTransparentColor = Color.Magenta
+      tsBtnStop.Name = "tsBtnStop"
+      tsBtnStop.Size = New Size(36, 37)
+      tsBtnStop.Text = "Stop"
+      tsBtnStop.ToolTipText = "Stop scan"
+      '
       ' frmNetScan
       ' 
       AutoScaleDimensions = New SizeF(7F, 15F)
@@ -177,17 +232,17 @@ Partial Class frmNetScan
       tsBtn.ResumeLayout(False)
       tsBtn.PerformLayout()
       scNetScan.Panel1.ResumeLayout(False)
-      scNetScan.Panel1.PerformLayout()
       scNetScan.Panel2.ResumeLayout(False)
       CType(scNetScan, ComponentModel.ISupportInitialize).EndInit()
       scNetScan.ResumeLayout(False)
+      grpBoxIPRange.ResumeLayout(False)
+      grpBoxIPRange.PerformLayout()
+      contextMnuIP.ResumeLayout(False)
       ResumeLayout(False)
-      PerformLayout()
    End Sub
 
    Friend WithEvents tsBtn As ToolStrip
    Friend WithEvents scNetScan As SplitContainer
-   Friend WithEvents txtBoxIPRange As TextBox
    Friend WithEvents lvDevices As ListView
    Friend WithEvents tsBtnScan As ToolStripButton
    Friend WithEvents tsBtnHideOffline As ToolStripButton
@@ -195,7 +250,14 @@ Partial Class frmNetScan
    Friend WithEvents tsBtnSep2 As ToolStripSeparator
    Friend WithEvents tsBtnHideMAC As ToolStripButton
    Friend WithEvents tsBtnHideHostname As ToolStripButton
-   Friend WithEvents imgListButtons As ImageList
    Friend WithEvents tsBtnHideVendor As ToolStripButton
+   Friend WithEvents contextMnuIP As ContextMenuStrip
+   Friend WithEvents contextMnuIP_rescan As ToolStripMenuItem
+   Friend WithEvents contextMnuIP_SaveAsPreset As ToolStripMenuItem
+   Friend WithEvents contextMnuIP_LoadPreset As ToolStripMenuItem
+   Friend WithEvents grpBoxIPRange As GroupBox
+   Friend WithEvents txtBoxIPRange As TextBox
+   Friend WithEvents tsBtnPause As ToolStripButton
+   Friend WithEvents tsBtnStop As ToolStripButton
 
 End Class
