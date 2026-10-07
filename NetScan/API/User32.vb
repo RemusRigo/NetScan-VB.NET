@@ -2,15 +2,19 @@
 ' user32.dll Functions for formanaging windows, handling input, and other core user interface tasks.
 '
 '   © 2026 Remus Rigo
-'      v1.0.20260804
+'      v1.0.20261006
 '--------------------------------------------------------------------------------------------------
 
 Imports System.Runtime.InteropServices
+Imports System.Text
 
 Namespace API
    Module user32
 
       Friend ReadOnly HWND_BOTTOM As New IntPtr(1)
+
+      Friend Const GW_CHILD As UInteger = 5
+      Friend Const GW_HWNDNEXT As UInteger = 2
 
       Friend Delegate Function EnumWindowsProc(hwnd As IntPtr, lParam As IntPtr) As Boolean
 
@@ -70,69 +74,102 @@ Namespace API
       ' Functions
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function AppendMenu(hMenu As IntPtr, uFlags As UInteger, uIDNewItem As UInteger, lpNewItem As String) As Boolean
+      Public Function AppendMenu(hMenu As IntPtr, uFlags As UInteger, uIDNewItem As UInteger, lpNewItem As String) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function EnumWindows(lpEnumFunc As EnumWindowsProc, lParam As IntPtr) As Boolean
+      Public Function EnumWindows(lpEnumFunc As EnumWindowsProc, lParam As IntPtr) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function FindWindow(lpClassName As String, lpWindowName As String) As IntPtr
+      Public Function FindWindow(lpClassName As String, lpWindowName As String) As IntPtr
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function FindWindowEx(hWndParent As IntPtr, hWndChildAfter As IntPtr, lpszClass As String, lpszWindow As String) As IntPtr
+      Public Function FindWindowEx(hWndParent As IntPtr, hWndChildAfter As IntPtr, lpszClass As String, lpszWindow As String) As IntPtr
+      End Function
+
+      <DllImport("user32.dll", CharSet:=CharSet.Unicode, SetLastError:=True)>
+      Public Function GetClassName(hWnd As IntPtr, lpClassName As StringBuilder, nMaxCount As Integer) As Integer
+      End Function
+
+      <DllImport("user32.dll")>
+      Public Function GetClientRect(hWnd As IntPtr, ByRef lpRect As RECT) As <MarshalAs(UnmanagedType.Bool)> Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function GetDC(hwnd As IntPtr) As IntPtr
+      Public Function GetDC(hwnd As IntPtr) As IntPtr
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function GetSystemMenu(hWnd As IntPtr, bRevert As Boolean) As IntPtr
+      Public Function GetSystemMenu(hWnd As IntPtr, bRevert As Boolean) As IntPtr
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function GetWindowRect(hWnd As IntPtr, ByRef rect As RECT) As Boolean
+      Public Function GetWindow(hWnd As IntPtr, uCmd As UInteger) As IntPtr
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True)>
+      Public Function GetWindowLong(hWnd As IntPtr, nIndex As Integer) As Integer
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function GetWindowText(hWnd As IntPtr, lpString As System.Text.StringBuilder, nMaxCount As Integer) As Integer
+      Public Function GetWindowRect(hWnd As IntPtr, ByRef rect As RECT) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function ReleaseDC(hwnd As IntPtr, hDC As IntPtr) As Integer
+      Public Function GetWindowText(hWnd As IntPtr, lpString As System.Text.StringBuilder, nMaxCount As Integer) As Integer
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True)>
+      Public Function GetWindowTextLength(hWnd As IntPtr) As Integer
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True)>
+      Public Function GetWindowThreadProcessId(hWnd As IntPtr, ByRef lpdwProcessId As UInteger) As UInteger
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True)>
+      Public Function IsWindow(ByVal hWnd As IntPtr) As <MarshalAs(UnmanagedType.Bool)> Boolean
+      End Function
+
+      <DllImport("user32.dll")>
+      Public Function IsWindowVisible(hWnd As IntPtr) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SendMessage(hWnd As IntPtr, Msg As UInteger, wParam As IntPtr, lParam As IntPtr) As IntPtr
+      Public Function ReleaseDC(hwnd As IntPtr, hDC As IntPtr) As Integer
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SetLayeredWindowAttributes(hWnd As IntPtr, crKey As UInteger, bAlpha As Byte, dwFlags As UInteger) As Boolean
+      Public Function SendMessage(hWnd As IntPtr, Msg As UInteger, wParam As IntPtr, lParam As IntPtr) As IntPtr
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SetParent(hWndChild As IntPtr, hWndNewParent As IntPtr) As IntPtr
+      Public Function SetLayeredWindowAttributes(hWnd As IntPtr, crKey As UInteger, bAlpha As Byte, dwFlags As UInteger) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SetWindowCompositionAttribute(hwnd As IntPtr, ByRef data As WindowCompositionAttributeData) As Integer
+      Public Function SetParent(hWndChild As IntPtr, hWndNewParent As IntPtr) As IntPtr
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SetWindowLong(hWnd As IntPtr, nIndex As Integer, dwNewLong As Integer) As Integer
+      Public Function SetWindowCompositionAttribute(hwnd As IntPtr, ByRef data As WindowCompositionAttributeData) As Integer
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function SetWindowPos(hWnd As IntPtr, hWndInsertAfter As IntPtr, X As Integer, Y As Integer, cx As Integer, cy As Integer, uFlags As UInteger) As Boolean
+      Public Function SetWindowLong(hWnd As IntPtr, nIndex As Integer, dwNewLong As Integer) As Integer
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
-      Friend Function UpdateLayeredWindow(hwnd As IntPtr, hdcDst As IntPtr, ByRef pptDst As GDI_POINT, ByRef psize As GDI_SIZE, hdcSrc As IntPtr,
-      ByRef pptSrc As GDI_POINT, crKey As UInteger, ByRef pblend As BLENDFUNCTION, dwFlags As UInteger) As Boolean
+      Public Function SetWindowPos(hWnd As IntPtr, hWndInsertAfter As IntPtr, X As Integer, Y As Integer, cx As Integer, cy As Integer, uFlags As UInteger) As Boolean
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
+      Public Function UpdateLayeredWindow(hwnd As IntPtr, hdcDst As IntPtr, ByRef pptDst As GDI_POINT, ByRef psize As GDI_SIZE, hdcSrc As IntPtr,
+                                          ByRef pptSrc As GDI_POINT, crKey As UInteger, ByRef pblend As BLENDFUNCTION, dwFlags As UInteger) As Boolean
       End Function
 
    End Module
+
 End Namespace

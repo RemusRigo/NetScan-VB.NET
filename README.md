@@ -42,6 +42,7 @@ The release contains following Frameworks:
 
 ## Roadmap
 
+* 2026-10-07: Upd: ignore Link-local/APIPA (169.254.x.x)
 * 2026-10-03: Add: Implement Pause/Stop
 * 2026-10-02: Add: Save/Load IP Ranges as presets
 * 2026-10-02: Upd: Change button size and icons

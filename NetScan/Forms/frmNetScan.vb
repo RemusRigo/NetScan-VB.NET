@@ -1,7 +1,7 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' NetScan: frmNetScan.vb: Main form
 '    © 2026 Remus Rigo
-'       v1.1.20261002
+'       v1.1.20261007
 '--------------------------------------------------------------------------------------------------
 
 Imports System.IO
@@ -120,19 +120,22 @@ Public Class frmNetScan
       Return results.Count > 0
    End Function
 
+   '-----------------------------------------------------------------------------------------------
+   ' ScanLocalIP: scans local network interfaces and populates the IP range textbox
    Private Sub ScanLocalIP()
       txtBoxIPRange.Clear()
       For Each ni In NetworkInterface.GetAllNetworkInterfaces()
          If ni.OperationalStatus <> OperationalStatus.Up Then Continue For
 
          For Each ip In ni.GetIPProperties().UnicastAddresses
-            ' AddressFamily.InterNetwork = IPv4 addresses
-            ' AddressFamily.InterNetworkv6 = IPv6 addresses
-            ' skip loopback addresses
-            If ip.Address.AddressFamily = AddressFamily.InterNetwork AndAlso Not IPAddress.IsLoopback(ip.Address) Then
+            If ip.Address.AddressFamily = AddressFamily.InterNetwork AndAlso ' IPv4 only
+               Not IPAddress.IsLoopback(ip.Address) AndAlso ' skip loopback (127.0.0.1)    
+               Not ip.ToString().StartsWith("169.254.") Then ' skip Link-local/APIPA (169.254.x.x)
+
                txtBoxIPRange.AppendText(IPToRange(ip.Address.ToString) & vbCrLf)
             End If
          Next
+
       Next
    End Sub
 
@@ -144,6 +147,7 @@ Public Class frmNetScan
 
       lvDevices.Items.Clear()
 
+      ' Populate ListView with all IPs in the specified ranges
       For Each r In ranges
          For index As Integer = r.MinIP To r.MaxIP
             Dim currentIP = r.BaseIP & "." & index.ToString()
@@ -159,6 +163,7 @@ Public Class frmNetScan
          Next
       Next
 
+      ' Prepare a list of items to process (checked items)
       Dim itemsToProcess As New List(Of ListViewItem)()
       For Each item As ListViewItem In lvDevices.Items
          If item.Checked Then

@@ -1,3 +1,7 @@
+dotnet restore
+
+@timeout 3
+
 rem dotnet build -f net48 -c Release -p:Platform=x64
 rem dotnet build -f net48 -c Release -p:Platform=x86
 
