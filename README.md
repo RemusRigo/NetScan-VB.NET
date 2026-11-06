@@ -1,7 +1,7 @@
 # NetScan
 NetScan: a network scanner utility
 
-![Screenshot](https://github.com/RemusRigo/CaterpillarScreenSaver-VB.NET/blob/main/Screenshots/Screenshot.png)
+![Screenshot](https://github.com/RemusRigo/NetScan-VB.NET/blob/main/Screenshots/Screenshot.png)
 
 
 ## 👤 Author
