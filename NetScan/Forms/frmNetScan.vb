@@ -174,6 +174,7 @@ Public Class frmNetScan
       pbLoad.Maximum = itemsToProcess.Count
       pbLoad.Value = 0
       Dim completedCount = 0
+      Dim onlineCount = 0
       Me.Text = $"{appTitle}: Scanning {itemsToProcess.Count} devices..."
 
       scanCTS?.Dispose()
@@ -206,6 +207,7 @@ Public Class frmNetScan
                                                                              Dim pingResult = PingIPWithTTL(currentIP)
                                                                              Dim isOnline = pingResult.Success
                                                                              If isOnline Then
+                                                                                Interlocked.Increment(onlineCount)
                                                                                 If Not hideHostname Then hostName = GetHostNameFromIP(targetAddr)
                                                                                 If Not hideMAC Then macAddress = GetMACFromIP(targetAddr)
                                                                                 If Not hideVendor Then
@@ -250,6 +252,7 @@ Public Class frmNetScan
                                         Me.Text = $"{appTitle}: Scan stopped ({completedCount}/{itemsToProcess.Count})"
                                      Else
                                         pbLoad.Value = pbLoad.Maximum
+                                        Me.Text = $"{appTitle}: {onlineCount} online devices found"
                                      End If
                                      pbLoad.BarColor = pbBarColor
                                      pbLoad.Invalidate()

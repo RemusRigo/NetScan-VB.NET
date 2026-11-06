@@ -14,5 +14,6 @@ dotnet build -f net10.0-windows -c Release -p:Platform=x86 -p:DebugType=None -p:
 
 copy *.md .\bin\Release /Y
 copy *.txt .\bin\Release /Y
+xcopy Screenshots bin\Release\Screenshots /E /I /Y
 
 @timeout 7

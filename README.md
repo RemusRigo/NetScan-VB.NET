@@ -1,16 +1,17 @@
 # NetScan
 NetScan: a network scanner utility
 
+![Screenshot](https://github.com/RemusRigo/CaterpillarScreenSaver-VB.NET/blob/main/Screenshots/Screenshot.png)
 
 
-## Author
+## 👤 Author
 
 * [@remusrigo](https://github.com/RemusRigo)
 * [@remusrigo](https://sourceforge.net/u/remusrigo/profile)
 
 
 
-## Features
+## ✨ Features
 
 * Detects the local IPv4 networks of all active network interfaces (ignores loopback, inactive interfaces, IPv6 and Link-local/APIPA 169.254.x.x)
 * Scan multiple IP ranges at once (one range per line)
@@ -25,13 +26,13 @@ NetScan: a network scanner utility
 
 
 
-## User's Guide
+## ⚙️ User's Guide
 
-See the [User's Guide](UsersGuide.md) for downloads, runtimes, installation and usage.
+See the [User's Guide](Users%20Guide.md) for downloads, runtimes, installation and usage.
 
 
 
-## Statistics
+## 🛠️ Statistics
 
 ![VB.NET](https://img.shields.io/badge/Language-VB.NET-blue)
 ![API](https://img.shields.io/badge/API-IPHlpAPI-lightblue)
@@ -46,8 +47,11 @@ See the [User's Guide](UsersGuide.md) for downloads, runtimes, installation and 
 
 
 
-## Roadmap
+## 🗺️ Roadmap
 
+* 2026-11-06: Add: Show total online devices
+* 2026-11-06: Fix: Change every MAC to uppercase so the comparison is case-safe
+* 2026-11-06: Add: Screenshot
 * 2026-10-07: Upd: ignore Link-local/APIPA (169.254.x.x)
 * 2026-10-03: Add: Implement Pause/Stop
 * 2026-10-02: Add: Save/Load IP Ranges as presets
@@ -70,7 +74,7 @@ See the [User's Guide](UsersGuide.md) for downloads, runtimes, installation and 
 
 
 
-## Resources
+## 🔗 Resources
 
 * [OUI Standards](https://standards-oui.ieee.org/oui/oui.csv)
 * [MAC Address Vendors](https://macvendors.com)

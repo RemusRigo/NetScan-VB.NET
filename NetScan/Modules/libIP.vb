@@ -18,7 +18,7 @@ Module libIP
    Public ReadOnly INVALID_HANDLE_VALUE As IntPtr = New IntPtr(-1)
 
    Private ReadOnly httpClient As New HttpClient()
-   Private ReadOnly ouiTable As New Dictionary(Of String, String)()
+   Private ReadOnly ouiTable As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
 
    '-----------------------------------------------------------------------------------------------
    ' IP To DWORD
@@ -162,24 +162,30 @@ Module libIP
 
       ' ARP can't see beyond the local subnet or gateway
       If SendARP(targetAddr, 0, macBytes, macLen) = 0 Then
-         Return String.Join("-", macBytes.Take(CInt(macLen)).Select(Function(b) b.ToString("x2")))
+         Return String.Join("-", macBytes.Take(CInt(macLen)).Select(Function(b) b.ToString("X2")))
       End If
       Return "Unknown"
    End Function
+
+   '-----------------------------------------------------------------------------------------------
+   ' Parse one "OUI,Organization" csv line into the OUI table
+   Private Sub AddOuiLine(line As String)
+      Dim commaIdx = line.IndexOf(","c)
+      If commaIdx <= 0 Then Exit Sub
+      Dim assignment = line.Substring(0, commaIdx).Trim().ToUpperInvariant()
+      If assignment = "ASSIGNMENT" Then Exit Sub ' skip header
+      Dim orgName = line.Substring(commaIdx + 1).Trim().Trim(""""c) ' strip surrounding quotes, if present
+      ouiTable(assignment) = orgName
+   End Sub
 
    '-----------------------------------------------------------------------------------------------
    ' Load the OUI table from an external csv file
    Public Function LoadExternalOuiTable() As Integer
       Dim path = System.IO.Path.Combine(Application.StartupPath, "oui.csv")
       Try
+         ouiTable.Clear()
          For Each line In File.ReadLines(path)
-            Dim commaIdx = line.IndexOf(","c)
-            If commaIdx > 0 Then
-               Dim assignment = line.Substring(0, commaIdx).Trim().ToUpperInvariant()
-               Dim orgName = line.Substring(commaIdx + 1).Trim()
-               orgName = orgName.Trim(""""c) ' strip surrounding quotes, if present
-               ouiTable(assignment) = orgName
-            End If
+            AddOuiLine(line)
          Next
       Catch ex As FileNotFoundException
          Return -1
@@ -200,21 +206,14 @@ Module libIP
             Return -1
          End If
 
+         ouiTable.Clear()
          Using stream = asm.GetManifestResourceStream(resourceName)
             Using reader As New StreamReader(stream)
-               Dim line As String
-               Do
+               Dim line = reader.ReadLine()
+               While line IsNot Nothing
+                  AddOuiLine(line)
                   line = reader.ReadLine()
-                  If line Is Nothing Then Exit Do
-
-                  Dim commaIdx = line.IndexOf(","c)
-                  If commaIdx > 0 Then
-                     Dim assignment = line.Substring(0, commaIdx).Trim().ToUpperInvariant()
-                     Dim orgName = line.Substring(commaIdx + 1).Trim()
-                     orgName = orgName.Trim(""""c) ' strip surrounding quotes, if present
-                     ouiTable(assignment) = orgName
-                  End If
-               Loop
+               End While
             End Using
          End Using
       Catch ex As Exception
@@ -243,7 +242,7 @@ Module libIP
    Public Function GetVendorFromMAC(macAddr As String) As String
       If macAddr = "Unknown" OrElse String.IsNullOrEmpty(macAddr) Then Return "Unknown"
 
-      Dim oui = macAddr.Replace("-", "").ToUpperInvariant()
+      Dim oui = macAddr.Replace("-", "").Replace(":", "").ToUpperInvariant()
       If oui.Length < 6 Then Return "Unknown"
       oui = oui.Substring(0, 6)
       Dim vendor As String = Nothing
