@@ -25,5 +25,13 @@ Namespace My
 
    Partial Friend Class MyApplication
 
+#If Not NETFRAMEWORK Then
+      ' HighDpiMode exists only in .NET 5+, so it is set here instead of in Application.Designer.vb
+      ' (.NET Framework 4.8 is DPI unaware by default)
+      Private Sub MyApplication_ApplyApplicationDefaults(sender As Object, e As ApplyApplicationDefaultsEventArgs) Handles Me.ApplyApplicationDefaults
+         e.HighDpiMode = HighDpiMode.DpiUnaware
+      End Sub
+#End If
+
    End Class
 End Namespace

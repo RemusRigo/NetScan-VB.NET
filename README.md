@@ -35,20 +35,27 @@ See the [User's Guide](Users%20Guide.md) for downloads, runtimes, installation a
 ## 🛠️ Statistics
 
 ![VB.NET](https://img.shields.io/badge/Language-VB.NET-blue)
+<br>
 ![API](https://img.shields.io/badge/API-IPHlpAPI-lightblue)
 ![API](https://img.shields.io/badge/API-User32-lightblue)
+<br>
+![.NET4.8](https://img.shields.io/badge/Runtime-.NET%204.8-lightblue)
 ![.NET8.0](https://img.shields.io/badge/Runtime-.NET%208.0-lightblue)
 ![.NET10.0](https://img.shields.io/badge/Runtime-.NET%2010.0-lightblue)
+<br>
 ![VS](https://img.shields.io/badge/IDE-Visual%20Studio-purple)
+<br>
 ![CSV](https://img.shields.io/badge/File-CSV-yellow)
 <br>
 ![status](https://img.shields.io/badge/status-completed-brightgreen) 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-VB.NET/total)
+<br>
+![Downloads](https://img.shields.io/github/downloads/RemusRigo/NetScan-VB.NET/total)
 
 
 
 ## 🗺️ Roadmap
 
+* 2026-11-26: Add: .NET 4.8 framework
 * 2026-11-06: Add: Show total online devices
 * 2026-11-06: Fix: Change every MAC to uppercase so the comparison is case-safe
 * 2026-11-06: Add: Screenshot

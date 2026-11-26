@@ -10,14 +10,17 @@ Each release contains one folder per framework and architecture:
 
 |Folder|Target Framework|Architecture|Required Runtime|
 |-|-|-|-|
+|`net48 x64`|.NET Framework 4.8|64-bit|[.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) (included in Windows 10/11)|
+|`net48 x86`|.NET Framework 4.8|32-bit|[.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) (included in Windows 10/11)|
 |`net8.0 x64`|.NET 8.0|64-bit|[.NET 8.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/8.0)|
 |`net8.0 x86`|.NET 8.0|32-bit|[.NET 8.0 Desktop Runtime (x86)](https://dotnet.microsoft.com/download/dotnet/8.0)|
 |`net10.0 x64`|.NET 10.0|64-bit|[.NET 10.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/10.0)|
 |`net10.0 x86`|.NET 10.0|32-bit|[.NET 10.0 Desktop Runtime (x86)](https://dotnet.microsoft.com/download/dotnet/10.0)|
 
-> **Which one do I need?** On 64-bit Windows 10/11, use **x64**. Pick the .NET version whose
-> **Desktop Runtime** you already have installed, or install one from the links above.
-> The plain ".NET Runtime" is not enough; NetScan needs the **Desktop** Runtime.
+> **Which one do I need?** On 64-bit Windows 10/11, use **x64**. The **net48** build runs without
+> installing anything. For the .NET 8.0/10.0 builds, pick the version whose **Desktop Runtime** you
+> already have installed, or install one from the links above.
+> The plain ".NET Runtime" is not enough; those builds need the **Desktop** Runtime.
 
 To check which runtimes are installed, open a command prompt and run:
 
@@ -36,11 +39,9 @@ NetScan is portable: there is no installer.
 1. Download and extract the folder that matches your system (see the table above), e.g. `net8.0 x64`.
 2. Copy the **whole folder** to a location where you have write access, for example:
    `D:\My Apps\NetScan\`
-   The folder must contain all 4 files; NetScan won't start if any of them is missing:
-   * `NetScan.exe`
-   * `NetScan.dll`
-   * `NetScan.deps.json`
-   * `NetScan.runtimeconfig.json`
+   The folder must contain all its files; NetScan won't start if any of them is missing:
+   * `net48`: `NetScan.exe`, `NetScan.exe.config`
+   * `net8.0` / `net10.0`: `NetScan.exe`, `NetScan.dll`, `NetScan.deps.json`, `NetScan.runtimeconfig.json`
 3. Optional: copy `oui.csv` into the same folder to see device vendors (see *Vendor lookup* below).
 4. Double-click `NetScan.exe`.
 

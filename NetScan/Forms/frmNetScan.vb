@@ -1,7 +1,7 @@
 ﻿'--------------------------------------------------------------------------------------------------
 ' NetScan: frmNetScan.vb: Main form
 '    © 2026 Remus Rigo
-'       v1.1.20261007
+'       v1.2.20261126
 '--------------------------------------------------------------------------------------------------
 
 Imports System.IO
@@ -9,7 +9,6 @@ Imports System.Net
 Imports System.Net.NetworkInformation
 Imports System.Net.Sockets
 Imports System.Threading
-
 Imports NetScan.API
 
 Public Class frmNetScan
@@ -277,6 +276,16 @@ Public Class frmNetScan
    ' frmNetScan: OnLoad
    Private Sub frmNetScan_Load(sender As Object, e As EventArgs) Handles MyBase.Load
       Me.Text = appTitle
+
+      ' icon and toolbar images: loaded from the exe / embedded PNGs (no binary resources in the .resx, needed for net48)
+      Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
+      tsBtnScan.Image = frmAbout.LoadImage("Play.png")
+      tsBtnPause.Image = frmAbout.LoadImage("Pause.png")
+      tsBtnStop.Image = frmAbout.LoadImage("Stop.png")
+      tsBtnHideOffline.Image = frmAbout.LoadImage("Online.png")
+      tsBtnHideHostname.Image = frmAbout.LoadImage("Host.png")
+      tsBtnHideMAC.Image = frmAbout.LoadImage("MAC.png")
+      tsBtnHideVendor.Image = frmAbout.LoadImage("Vendor.png")
 
       ' build ListView
       lvDevices.View = View.Details

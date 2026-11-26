@@ -23,7 +23,6 @@ Partial Class frmNetScan
    <System.Diagnostics.DebuggerStepThrough()>
    Private Sub InitializeComponent()
       components = New ComponentModel.Container()
-      Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmNetScan))
       tsBtn = New ToolStrip()
       tsBtnScan = New ToolStripButton()
       tsBtnSep1 = New ToolStripSeparator()
@@ -64,7 +63,6 @@ Partial Class frmNetScan
       ' tsBtnScan
       ' 
       tsBtnScan.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnScan.Image = CType(resources.GetObject("tsBtnScan.Image"), Image)
       tsBtnScan.ImageTransparentColor = Color.Magenta
       tsBtnScan.Name = "tsBtnScan"
       tsBtnScan.Size = New Size(36, 37)
@@ -80,7 +78,6 @@ Partial Class frmNetScan
       ' 
       tsBtnHideOffline.CheckOnClick = True
       tsBtnHideOffline.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnHideOffline.Image = CType(resources.GetObject("tsBtnHideOffline.Image"), Image)
       tsBtnHideOffline.ImageTransparentColor = Color.Magenta
       tsBtnHideOffline.Name = "tsBtnHideOffline"
       tsBtnHideOffline.Size = New Size(36, 37)
@@ -91,7 +88,6 @@ Partial Class frmNetScan
       ' 
       tsBtnHideHostname.CheckOnClick = True
       tsBtnHideHostname.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnHideHostname.Image = CType(resources.GetObject("tsBtnHideHostname.Image"), Image)
       tsBtnHideHostname.ImageTransparentColor = Color.Magenta
       tsBtnHideHostname.Name = "tsBtnHideHostname"
       tsBtnHideHostname.Size = New Size(36, 37)
@@ -101,7 +97,6 @@ Partial Class frmNetScan
       ' 
       tsBtnHideMAC.CheckOnClick = True
       tsBtnHideMAC.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnHideMAC.Image = CType(resources.GetObject("tsBtnHideMAC.Image"), Image)
       tsBtnHideMAC.ImageTransparentColor = Color.Magenta
       tsBtnHideMAC.Name = "tsBtnHideMAC"
       tsBtnHideMAC.Size = New Size(36, 37)
@@ -111,7 +106,6 @@ Partial Class frmNetScan
       ' 
       tsBtnHideVendor.CheckOnClick = True
       tsBtnHideVendor.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnHideVendor.Image = CType(resources.GetObject("tsBtnHideVendor.Image"), Image)
       tsBtnHideVendor.ImageTransparentColor = Color.Magenta
       tsBtnHideVendor.Name = "tsBtnHideVendor"
       tsBtnHideVendor.Size = New Size(36, 37)
@@ -200,7 +194,6 @@ Partial Class frmNetScan
       ' tsBtnPause
       ' 
       tsBtnPause.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnPause.Image = CType(resources.GetObject("tsBtnPause.Image"), Image)
       tsBtnPause.ImageTransparentColor = Color.Magenta
       tsBtnPause.Name = "tsBtnPause"
       tsBtnPause.Size = New Size(36, 37)
@@ -210,7 +203,6 @@ Partial Class frmNetScan
       ' tsBtnStop
       ' 
       tsBtnStop.DisplayStyle = ToolStripItemDisplayStyle.Image
-      tsBtnStop.Image = CType(resources.GetObject("tsBtnStop.Image"), Image)
       tsBtnStop.ImageTransparentColor = Color.Magenta
       tsBtnStop.Name = "tsBtnStop"
       tsBtnStop.Size = New Size(36, 37)
@@ -225,7 +217,6 @@ Partial Class frmNetScan
       ClientSize = New Size(1008, 561)
       Controls.Add(scNetScan)
       Controls.Add(tsBtn)
-      Icon = CType(resources.GetObject("$this.Icon"), Icon)
       Name = "frmNetScan"
       StartPosition = FormStartPosition.CenterScreen
       Text = "NetScan"

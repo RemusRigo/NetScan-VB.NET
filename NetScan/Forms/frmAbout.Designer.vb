@@ -22,7 +22,6 @@ Partial Class frmAbout
    'Do not modify it using the code editor.
    <System.Diagnostics.DebuggerStepThrough()> _
    Private Sub InitializeComponent()
-      Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmAbout))
       lnkLblGitHub = New LinkLabel()
       lblTitle = New Label()
       lblVer = New Label()
@@ -69,7 +68,6 @@ Partial Class frmAbout
       ' imgPayPal
       ' 
       imgPayPal.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
-      imgPayPal.Image = CType(resources.GetObject("imgPayPal.Image"), Image)
       imgPayPal.Location = New Point(2, 130)
       imgPayPal.Name = "imgPayPal"
       imgPayPal.Size = New Size(64, 64)
@@ -79,7 +77,6 @@ Partial Class frmAbout
       ' imgRevolut
       ' 
       imgRevolut.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
-      imgRevolut.Image = CType(resources.GetObject("imgRevolut.Image"), Image)
       imgRevolut.Location = New Point(258, 130)
       imgRevolut.Name = "imgRevolut"
       imgRevolut.Size = New Size(64, 64)
@@ -102,7 +99,7 @@ Partial Class frmAbout
       Name = "frmAbout"
       ShowIcon = False
       ShowInTaskbar = False
-      StartPosition = FormStartPosition.CenterParent
+      StartPosition = FormStartPosition.CenterScreen
       Text = "About"
       CType(imgPayPal, ComponentModel.ISupportInitialize).EndInit()
       CType(imgRevolut, ComponentModel.ISupportInitialize).EndInit()

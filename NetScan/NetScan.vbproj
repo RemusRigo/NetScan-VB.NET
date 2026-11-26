@@ -1,27 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-   <PropertyGroup>
-      <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-      <AssemblyName>NetScan</AssemblyName>
-      <MyType>WindowsForms</MyType>
-      <OutputType>WinExe</OutputType>
-      <StartupObject>NetScan.My.MyApplication</StartupObject>
-      <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
-      <UseWindowsForms>true</UseWindowsForms>
-      <Platforms>x64;x86</Platforms>
-      <ApplicationIcon>Res\Radar.ico</ApplicationIcon>
-      <GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse>
-   </PropertyGroup>
+<PropertyGroup>
+   <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+   <ApplicationIcon>Res\Radar.ico</ApplicationIcon>
+   <AssemblyName>NetScan</AssemblyName>
+   <MyType>WindowsForms</MyType>
+   <OutputType>WinExe</OutputType>
+   <Platforms>x64;x86</Platforms>
+   <StartupObject>NetScan.My.MyApplication</StartupObject>
+   <TargetFrameworks>net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+   <UseWindowsForms>true</UseWindowsForms>
+<!--   <GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse> -->
+   <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)' == 'true'">net10.0-windows</TargetFrameworks>
+</PropertyGroup>
 
-   <PropertyGroup Condition="'$(TargetFramework)' != ''">
-      <TfmName>$(TargetFramework.Replace('-windows', ''))</TfmName>
-      <OutputPath>..\bin\$(Configuration)\$(TfmName) $(Platform)\</OutputPath>
-      <IntermediateOutputPath>obj\$(Configuration)\$(TfmName) $(Platform)\</IntermediateOutputPath>
-   </PropertyGroup>
+<PropertyGroup Condition="'$(TargetFramework)' != ''">
+   <TfmName>$(TargetFramework.Replace('-windows', ''))</TfmName>
+   <OutputPath>..\bin\$(Configuration)\$(TfmName) $(Platform)\</OutputPath>
+   <IntermediateOutputPath>obj\$(Configuration)\$(TfmName) $(Platform)\</IntermediateOutputPath>
+</PropertyGroup>
 
-   <PropertyGroup Condition="'$(Platform)' == 'x86' Or '$(Platform)' == 'x64'">
-      <PlatformTarget>$(Platform)</PlatformTarget>
-   </PropertyGroup>
+<!-- .NET Framework 4.8: framework assemblies that .NET 8/10 include by default -->
+<ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+   <Reference Include="System.Net.Http" />
+   <Reference Include="System.Web.Extensions" />   <!-- JavaScriptSerializer, used by AppSettings instead of System.Text.Json -->
+</ItemGroup>
+
+<PropertyGroup Condition="'$(Platform)' == 'x86' Or '$(Platform)' == 'x64'">
+   <PlatformTarget>$(Platform)</PlatformTarget>
+</PropertyGroup>
+
+<ItemGroup>
+   <EmbeddedResource Include="Res\PayPal.png" LogicalName="PayPal.png" />
+   <EmbeddedResource Include="Res\Revolut.png" LogicalName="Revolut.png" />
+   <EmbeddedResource Include="Res\Play.png" LogicalName="Play.png" />
+   <EmbeddedResource Include="Res\Pause.png" LogicalName="Pause.png" />
+   <EmbeddedResource Include="Res\Stop.png" LogicalName="Stop.png" />
+   <EmbeddedResource Include="Res\Online.png" LogicalName="Online.png" />
+   <EmbeddedResource Include="Res\Host.png" LogicalName="Host.png" />
+   <EmbeddedResource Include="Res\MAC.png" LogicalName="MAC.png" />
+   <EmbeddedResource Include="Res\Vendor.png" LogicalName="Vendor.png" />
+</ItemGroup>
+
 
 <ItemGroup>
   <Content Include="Res\Radar.ico" />

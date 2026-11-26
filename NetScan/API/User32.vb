@@ -2,7 +2,7 @@
 ' user32.dll Functions for formanaging windows, handling input, and other core user interface tasks.
 '
 '   © 2026 Remus Rigo
-'      v1.0.20261024
+'      v1.0.20261110
 '--------------------------------------------------------------------------------------------------
 
 Imports System.Runtime.InteropServices
@@ -79,6 +79,10 @@ Namespace API
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
       Public Function CloseDesktop(hDesktop As IntPtr) As Boolean
+      End Function
+
+      <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
+      Public Function EnableWindow(hWnd As IntPtr, bEnable As Boolean) As Boolean
       End Function
 
       <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)>
